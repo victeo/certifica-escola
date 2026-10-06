@@ -2,47 +2,47 @@ import { Component, inject, input, resource, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { AuthShell } from '../../shared/auth-shell';
 import { errorMessage } from '../../shared/error-message';
 
 @Component({
   selector: 'app-accept-invite',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, AuthShell],
   template: `
-    <main class="mx-auto mt-16 max-w-sm px-4">
-      <h1 class="mb-6 text-2xl font-semibold text-gray-900">Convite para diretor(a)</h1>
+    <app-auth-shell>
+      <h1 class="mb-1 text-3xl font-semibold text-navy-900">Convite para diretor(a)</h1>
       @if (invite.isLoading()) {
-        <p>Verificando convite…</p>
+        <p class="mt-4">Verificando convite…</p>
       } @else if (invite.value(); as inv) {
         @if (auth.isInviteUsable(inv)) {
-          <p class="mb-4 text-gray-900">Escola: <strong>{{ inv.schoolName }}</strong></p>
+          <p class="mb-6 text-slate-700">Você foi convidado(a) para administrar a escola <strong class="text-navy-900">{{ inv.schoolName }}</strong>. Crie seu acesso:</p>
           <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
             <div>
-              <label for="name" class="mb-1 block text-sm font-medium text-gray-900">Seu nome</label>
-              <input id="name" formControlName="name" autocomplete="name" class="w-full rounded border border-gray-500 px-3 py-2" />
+              <label for="name" class="field-label">Seu nome</label>
+              <input id="name" formControlName="name" autocomplete="name" class="field-input" />
             </div>
             <div>
-              <label for="email" class="mb-1 block text-sm font-medium text-gray-900">E-mail</label>
-              <input id="email" type="email" formControlName="email" autocomplete="username" class="w-full rounded border border-gray-500 px-3 py-2" />
+              <label for="email" class="field-label">E-mail</label>
+              <input id="email" type="email" formControlName="email" autocomplete="username" class="field-input" />
             </div>
             <div>
-              <label for="password" class="mb-1 block text-sm font-medium text-gray-900">Senha (mín. 6 caracteres)</label>
-              <input id="password" type="password" formControlName="password" autocomplete="new-password" class="w-full rounded border border-gray-500 px-3 py-2" />
+              <label for="password" class="field-label">Senha (mín. 6 caracteres)</label>
+              <input id="password" type="password" formControlName="password" autocomplete="new-password" class="field-input" />
             </div>
             @if (error()) {
-              <p role="alert" class="text-sm text-red-700">{{ error() }}</p>
+              <p role="alert" class="alert-error">{{ error() }}</p>
             }
-            <button type="submit" [disabled]="form.invalid || loading()"
-              class="w-full rounded bg-indigo-700 px-4 py-2 font-medium text-white hover:bg-indigo-800 disabled:opacity-60">
+            <button type="submit" [disabled]="form.invalid || loading()" class="btn-primary w-full">
               {{ loading() ? 'Criando conta…' : 'Criar conta' }}
             </button>
           </form>
         } @else {
-          <p role="alert" class="text-red-700">Este convite já foi utilizado ou expirou. Peça um novo ao administrador.</p>
+          <p role="alert" class="alert-error mt-4">Este convite já foi utilizado ou expirou. Peça um novo ao administrador.</p>
         }
       } @else {
-        <p role="alert" class="text-red-700">Convite não encontrado.</p>
+        <p role="alert" class="alert-error mt-4">Convite não encontrado.</p>
       }
-    </main>
+    </app-auth-shell>
   `,
 })
 export class AcceptInvite {

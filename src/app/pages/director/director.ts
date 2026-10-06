@@ -11,72 +11,74 @@ import { errorMessage } from '../../shared/error-message';
   imports: [ReactiveFormsModule, AppHeader],
   template: `
     <app-header />
-    <main class="mx-auto max-w-5xl space-y-8 px-4 py-6">
-      <section aria-labelledby="form-title">
-        <h2 id="form-title" class="mb-3 text-xl font-semibold text-gray-900">
+    <main class="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
+      <section class="card" aria-labelledby="form-title">
+        <h2 id="form-title" class="section-title">
+          <span aria-hidden="true">{{ editingId() ? '✏️' : '➕' }}</span>
           {{ editingId() ? 'Editar professor(a)' : 'Adicionar professor(a)' }}
         </h2>
-        <form [formGroup]="form" (ngSubmit)="save()" class="grid gap-4 sm:grid-cols-2">
+        <form [formGroup]="form" (ngSubmit)="save()" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           @for (f of fields; track f.name) {
             <div>
-              <label [for]="f.name" class="mb-1 block text-sm font-medium text-gray-900">{{ f.label }}</label>
-              <input [id]="f.name" [type]="f.type" [formControlName]="f.name" [attr.inputmode]="f.inputmode"
-                class="w-full rounded border border-gray-500 px-3 py-2" />
+              <label [for]="f.name" class="field-label">{{ f.label }}</label>
+              <input [id]="f.name" [type]="f.type" [formControlName]="f.name" [attr.inputmode]="f.inputmode" class="field-input" />
             </div>
           }
-          <div class="flex items-end gap-3 sm:col-span-2">
-            <button type="submit" [disabled]="form.invalid || busy()"
-              class="rounded bg-indigo-700 px-4 py-2 font-medium text-white hover:bg-indigo-800 disabled:opacity-60">
-              {{ editingId() ? 'Salvar alterações' : 'Adicionar' }}
+          <div class="flex flex-wrap items-end gap-3 sm:col-span-2 lg:col-span-3">
+            <button type="submit" [disabled]="form.invalid || busy()" class="btn-accent">
+              {{ editingId() ? 'Salvar alterações' : 'Adicionar professor' }}
             </button>
             @if (editingId()) {
-              <button type="button" class="px-3 py-2 text-gray-900 underline" (click)="cancelEdit()">Cancelar</button>
+              <button type="button" class="btn-ghost" (click)="cancelEdit()">Cancelar</button>
             }
           </div>
         </form>
         @if (error()) {
-          <p role="alert" class="mt-2 text-sm text-red-700">{{ error() }}</p>
+          <p role="alert" class="alert-error mt-4">{{ error() }}</p>
         }
       </section>
 
-      <section aria-labelledby="list-title">
-        <h2 id="list-title" class="mb-3 text-xl font-semibold text-gray-900">Professores</h2>
+      <section class="card" aria-labelledby="list-title">
+        <h2 id="list-title" class="section-title">
+          <span aria-hidden="true">🧑‍🏫</span> Professores
+          <span class="badge bg-navy-100 text-navy-900">{{ teachers.value()?.length ?? 0 }}</span>
+        </h2>
         @if (teachers.isLoading()) {
           <p>Carregando…</p>
         } @else if (!teachers.value()?.length) {
-          <p class="text-gray-700">Nenhum professor cadastrado ainda.</p>
+          <p class="empty">Nenhum professor cadastrado ainda. Use o formulário acima para começar.</p>
         } @else {
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-              <thead>
-                <tr class="border-b border-gray-400 text-gray-900">
-                  <th scope="col" class="py-2 pr-4">Nome</th>
-                  <th scope="col" class="py-2 pr-4">Disciplina</th>
-                  <th scope="col" class="py-2 pr-4">Curso</th>
-                  <th scope="col" class="py-2 pr-4">Carga horária</th>
-                  <th scope="col" class="py-2"><span class="sr-only">Ações</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (t of teachers.value(); track t.id) {
-                  <tr class="border-b border-gray-200">
-                    <td class="py-2 pr-4">{{ t.name }}</td>
-                    <td class="py-2 pr-4">{{ t.subject }}</td>
-                    <td class="py-2 pr-4">{{ t.course }}</td>
-                    <td class="py-2 pr-4">{{ t.workloadHours }} h</td>
-                    <td class="py-2 text-right whitespace-nowrap">
-                      <button type="button" class="mr-3 font-medium text-indigo-800 underline" (click)="download(t)"
-                        [attr.aria-label]="'Baixar certificado de ' + t.name">Baixar certificado</button>
-                      <button type="button" class="mr-3 text-gray-900 underline" (click)="edit(t)"
+          <table class="rtable">
+            <thead>
+              <tr>
+                <th scope="col">Nome</th>
+                <th scope="col">Disciplina</th>
+                <th scope="col">Curso</th>
+                <th scope="col">Carga horária</th>
+                <th scope="col"><span class="sr-only">Ações</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of teachers.value(); track t.id) {
+                <tr>
+                  <td data-label="Nome" class="font-bold text-navy-900">{{ t.name }}</td>
+                  <td data-label="Disciplina">{{ t.subject }}</td>
+                  <td data-label="Curso">{{ t.course }}</td>
+                  <td data-label="Carga horária">{{ t.workloadHours }} h</td>
+                  <td class="actions">
+                    <div class="flex flex-wrap justify-end gap-2">
+                      <button type="button" class="btn-primary btn-sm" (click)="download(t)"
+                        [attr.aria-label]="'Baixar certificado de ' + t.name">Certificado</button>
+                      <button type="button" class="btn-ghost btn-sm" (click)="edit(t)"
                         [attr.aria-label]="'Editar ' + t.name">Editar</button>
-                      <button type="button" class="text-red-700 underline" (click)="remove(t)"
+                      <button type="button" class="btn-danger btn-sm" (click)="remove(t)"
                         [attr.aria-label]="'Excluir ' + t.name">Excluir</button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         }
       </section>
     </main>

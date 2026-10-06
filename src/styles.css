@@ -1,3 +1,121 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Fredoka', 'Nunito', ui-sans-serif, sans-serif;
+  /* Azul "uniforme" + amarelo "lápis" + verde "lousa" */
+  --color-navy-50: #eef4ff;
+  --color-navy-100: #dbe7ff;
+  --color-navy-600: #2556c4;
+  --color-navy-700: #1d449c;
+  --color-navy-800: #17367e;
+  --color-navy-900: #0f2557;
+  --color-pencil-300: #ffd95e;
+  --color-pencil-400: #fcc419;
+  --color-pencil-500: #f0b100;
+  --color-chalk-700: #1f5f4a;
+  --color-chalk-800: #174a39;
+  --color-paper: #fbf8f1;
+}
+
+@utility card {
+  @apply rounded-2xl border border-navy-100 bg-white p-5 shadow-sm sm:p-6;
+}
+@utility section-title {
+  @apply mb-4 flex items-center gap-2 text-xl font-semibold text-navy-900;
+}
+@utility field-label {
+  @apply mb-1 block text-sm font-bold text-navy-900;
+}
+@utility field-input {
+  @apply w-full rounded-xl border-2 border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 transition-colors placeholder:text-slate-500 hover:border-navy-600 focus:border-navy-600;
+}
+@utility btn {
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-base font-bold transition disabled:cursor-not-allowed disabled:opacity-60;
+}
+@utility btn-primary {
+  @apply btn bg-navy-700 text-white shadow-sm hover:bg-navy-800;
+}
+@utility btn-accent {
+  @apply btn bg-pencil-400 text-navy-900 shadow-sm hover:bg-pencil-300;
+}
+@utility btn-ghost {
+  @apply btn border-2 border-navy-100 bg-white text-navy-800 hover:bg-navy-50;
+}
+@utility btn-danger {
+  @apply btn border-2 border-red-200 bg-white text-red-800 hover:bg-red-50;
+}
+@utility btn-sm {
+  @apply min-h-9 rounded-lg px-3 py-1.5 text-sm;
+}
+@utility alert-error {
+  @apply rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-900;
+}
+@utility alert-success {
+  @apply rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-emerald-950;
+}
+@utility badge {
+  @apply inline-block rounded-full px-2.5 py-0.5 text-xs font-bold;
+}
+@utility empty {
+  @apply rounded-xl border-2 border-dashed border-navy-100 px-4 py-8 text-center text-slate-700;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: #1b2440;
+  }
+  body {
+    background: var(--color-paper);
+    background-image: radial-gradient(#e7e1d1 1px, transparent 1px);
+    background-size: 22px 22px;
+    min-height: 100dvh;
+  }
+  h1,
+  h2 {
+    font-family: var(--font-display);
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-navy-600);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+
+  /* Tabelas: viram "cartões" empilhados no celular. */
+  .rtable {
+    @apply w-full text-left text-sm;
+  }
+  .rtable thead th {
+    @apply border-b-2 border-navy-100 px-3 py-2 font-bold text-navy-900;
+  }
+  .rtable tbody td {
+    @apply px-3 py-3 align-middle;
+  }
+  .rtable tbody tr {
+    @apply border-b border-slate-200 last:border-0;
+  }
+  @media (max-width: 40rem) {
+    .rtable thead {
+      @apply sr-only;
+    }
+    .rtable tbody tr {
+      @apply mb-3 block rounded-xl border border-navy-100 bg-navy-50/40 p-2 last:border;
+    }
+    .rtable tbody td {
+      @apply flex items-start justify-between gap-4 px-2 py-1.5 text-right;
+    }
+    .rtable tbody td::before {
+      content: attr(data-label);
+      @apply text-left font-bold text-navy-900;
+    }
+    .rtable tbody td.actions {
+      @apply flex-wrap justify-end;
+    }
+    .rtable tbody td.actions::before {
+      content: none;
+    }
+  }
+}
