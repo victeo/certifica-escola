@@ -2,34 +2,33 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { AuthShell } from '../../shared/auth-shell';
 import { errorMessage } from '../../shared/error-message';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, AuthShell],
   template: `
-    <main class="mx-auto mt-16 max-w-sm px-4">
-      <h1 class="mb-6 text-2xl font-semibold text-gray-900">Certifica Escola</h1>
+    <app-auth-shell>
+      <h1 class="mb-1 text-3xl font-semibold text-navy-900">Bem-vindo(a)!</h1>
+      <p class="mb-6 text-slate-700">Entre para gerenciar seus professores e certificados.</p>
       <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
         <div>
-          <label for="email" class="mb-1 block text-sm font-medium text-gray-900">E-mail</label>
-          <input id="email" type="email" autocomplete="username" formControlName="email"
-            class="w-full rounded border border-gray-500 px-3 py-2" />
+          <label for="email" class="field-label">E-mail</label>
+          <input id="email" type="email" autocomplete="username" formControlName="email" class="field-input" />
         </div>
         <div>
-          <label for="password" class="mb-1 block text-sm font-medium text-gray-900">Senha</label>
-          <input id="password" type="password" autocomplete="current-password" formControlName="password"
-            class="w-full rounded border border-gray-500 px-3 py-2" />
+          <label for="password" class="field-label">Senha</label>
+          <input id="password" type="password" autocomplete="current-password" formControlName="password" class="field-input" />
         </div>
         @if (error()) {
-          <p role="alert" class="text-sm text-red-700">{{ error() }}</p>
+          <p role="alert" class="alert-error">{{ error() }}</p>
         }
-        <button type="submit" [disabled]="form.invalid || loading()"
-          class="w-full rounded bg-indigo-700 px-4 py-2 font-medium text-white hover:bg-indigo-800 disabled:opacity-60">
+        <button type="submit" [disabled]="form.invalid || loading()" class="btn-primary w-full">
           {{ loading() ? 'Entrando…' : 'Entrar' }}
         </button>
       </form>
-    </main>
+    </app-auth-shell>
   `,
 })
 export class Login {
