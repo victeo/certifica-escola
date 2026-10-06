@@ -1,0 +1,103 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userDoc(request.auth.uid).data.role == 'admin';
+    }
+
+    function isDirector() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userDoc(request.auth.uid).data.role == 'director';
+    }
+
+    // Perfis. O admin é criado manualmente no console (role: 'admin').
+    // O diretor só cria o próprio perfil junto com o consumo atômico de um convite válido.
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'email', 'role', 'schoolName', 'inviteCode', 'createdAt'])
+        && request.resource.data.role == 'director'
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.createdAt == request.time
+        && get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.used == false
+        && get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.expiresAt > request.time
+        && get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.schoolName == request.resource.data.schoolName
+        && getAfter(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.used == true
+        && getAfter(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.usedBy == uid;
+
+      allow update, delete: if false;
+    }
+
+    // Convites. O código é um UUID aleatório: quem tem o link consegue ler (get), mas ninguém lista.
+    match /invites/{code} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.used == false
+        && request.resource.data.schoolName is string
+        && request.resource.data.schoolName.size() > 0;
+      allow delete: if isAdmin();
+
+      // Marcar como usado: somente o novo usuário, uma única vez, mexendo só nos campos de uso.
+      allow update: if signedIn()
+        && resource.data.used == false
+        && resource.data.expiresAt > request.time
+        && request.resource.data.used == true
+        && request.resource.data.usedBy == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedBy', 'usedAt']);
+    }
+
+    // Professores: cada diretor acessa apenas os seus.
+    match /teachers/{id} {
+      allow read: if isAdmin() || (isDirector() && resource.data.directorId == request.auth.uid);
+
+      allow create: if isDirector()
+        && request.resource.data.directorId == request.auth.uid
+        && validTeacher(request.resource.data);
+
+      allow update: if isDirector()
+        && resource.data.directorId == request.auth.uid
+        && request.resource.data.directorId == request.auth.uid
+        && validTeacher(request.resource.data);
+
+      allow delete: if isDirector() && resource.data.directorId == request.auth.uid;
+    }
+
+    // Certificados emitidos: verificação pública por código (get), sem listagem, imutáveis.
+    match /certificates/{code} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if isDirector()
+        && request.resource.data.directorId == request.auth.uid
+        && request.resource.data.issuedAt == request.time
+        && exists(/databases/$(database)/documents/teachers/$(request.resource.data.teacherId))
+        && get(/databases/$(database)/documents/teachers/$(request.resource.data.teacherId)).data.directorId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    function validTeacher(d) {
+      return d.name is string && d.name.size() > 0 && d.name.size() <= 200
+        && d.email is string
+        && d.cpf is string
+        && d.subject is string
+        && d.course is string
+        && d.workloadHours is number && d.workloadHours > 0;
+    }
+  }
+}

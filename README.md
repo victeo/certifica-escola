@@ -1,59 +1,41 @@
-# EncontroEscola
+# Certifica Escola
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.1.
+Admin convida diretores por link; diretores cadastram seus professores (salvos no Firestore) e baixam os certificados em PDF.
 
-## Development server
+Angular 22 + Firebase (Auth, Firestore, Hosting). Certificados são gerados no navegador com `pdf-lib`.
 
-To start a local development server, run:
+## Configuração (uma vez)
 
-```bash
-ng serve
+1. Crie um projeto no [Firebase Console](https://console.firebase.google.com) e ative **Authentication → E-mail/senha** e **Firestore**.
+2. Registre um app Web e cole a config em `src/app/core/firebase.config.ts`; ajuste o ID do projeto em `.firebaserc`.
+3. Publique as regras: `npx firebase login && npx firebase deploy --only firestore`.
+4. **Crie o primeiro admin** (não há tela para isso, por segurança):
+   - Authentication → *Add user* (e-mail e senha) e copie o UID.
+   - Firestore → coleção `users` → documento com esse UID:
+     `{ name: "Seu nome", email: "...", role: "admin", schoolName: "Administração" }`.
+
+## Fluxo
+
+- Admin entra em `/login`, vai em **Convidar diretor(a)**, informa a escola e envia o link `/convite/<código>` (válido por 7 dias, uso único).
+- O diretor abre o link, cria a conta e cadastra professores (nome, e-mail, CPF, disciplina, curso, carga horária).
+- **Baixar certificado** gera o PDF do professor, com a assinatura do diretor (nome e escola) e um **código de verificação**. Cada download registra a emissão em `certificates/{código}`.
+- Qualquer pessoa confere a autenticidade em `/verificar/<código>` (link impresso no certificado).
+- O admin vê, na própria tela, os convites, os diretores (com nº de professores) e os professores de todas as escolas.
+
+## Modelo do certificado
+
+Por padrão sai um certificado simples com moldura. Para usar a sua arte, coloque o arquivo em `public/certificado/` e ajuste `src/app/core/certificate.config.ts` (`template` e posições dos textos).
+
+## Deploy
+
+```
+npm run deploy           # build + hosting + regras do Firestore
+npm run deploy:hosting   # só o site
+npm run deploy:regras    # só firestore.rules
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Primeiro rode `npx firebase login` (ou exporte `FIREBASE_TOKEN`, gerado com `npx firebase login:ci`). O script se recusa a publicar enquanto `firebase.config.ts` e `.firebaserc` ainda tiverem os valores de exemplo.
 
-## Code scaffolding
+## Desenvolvimento
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+`npm start` · `npm test` (requer Node ≥ 22.22.3).
