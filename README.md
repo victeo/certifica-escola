@@ -29,9 +29,12 @@ Por padrão sai um certificado simples com moldura. Para usar a sua arte, coloqu
 ## Deploy
 
 ```
-npm run build
-npx firebase deploy
+npm run deploy           # build + hosting + regras do Firestore
+npm run deploy:hosting   # só o site
+npm run deploy:regras    # só firestore.rules
 ```
+
+Primeiro rode `npx firebase login` (ou exporte `FIREBASE_TOKEN`, gerado com `npx firebase login:ci`). O script se recusa a publicar enquanto `firebase.config.ts` e `.firebaserc` ainda tiverem os valores de exemplo.
 
 ## Desenvolvimento
 
