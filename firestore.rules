@@ -79,6 +79,18 @@ service cloud.firestore {
       allow delete: if isDirector() && resource.data.directorId == request.auth.uid;
     }
 
+    // Certificados emitidos: verificação pública por código (get), sem listagem, imutáveis.
+    match /certificates/{code} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if isDirector()
+        && request.resource.data.directorId == request.auth.uid
+        && request.resource.data.issuedAt == request.time
+        && exists(/databases/$(database)/documents/teachers/$(request.resource.data.teacherId))
+        && get(/databases/$(database)/documents/teachers/$(request.resource.data.teacherId)).data.directorId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
     function validTeacher(d) {
       return d.name is string && d.name.size() > 0 && d.name.size() <= 200
         && d.email is string

@@ -31,6 +31,12 @@ export class TeacherService {
       .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   }
 
+  /** Somente admin: todos os professores de todas as escolas. */
+  async listAll(): Promise<Teacher[]> {
+    const snap = await getDocs(collection(db, 'teachers'));
+    return snap.docs.map((d) => ({ id: d.id, ...(d.data() as TeacherData & { directorId: string }) }));
+  }
+
   async add(data: TeacherData): Promise<void> {
     await addDoc(collection(db, 'teachers'), { ...data, directorId: this.uid, createdAt: serverTimestamp() });
   }

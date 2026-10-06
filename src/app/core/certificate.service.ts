@@ -1,9 +1,13 @@
 import { inject, Service } from '@angular/core';
+import { doc as fsDoc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from 'pdf-lib';
 import { AuthService } from './auth.service';
 import { certificateConfig, TextSlot } from './certificate.config';
-import { Teacher } from './models';
+import { db } from './firebase';
+import { IssuedCertificate, Teacher } from './models';
 
+// Sem caracteres ambíguos (0/O, 1/I).
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const A4_LANDSCAPE: [number, number] = [841.89, 595.28];
 
 @Service()
@@ -20,9 +24,38 @@ export class CertificateService {
     URL.revokeObjectURL(url);
   }
 
+  verificationUrl(code: string): string {
+    return `${location.origin}/verificar/${code}`;
+  }
+
+  async getIssued(code: string): Promise<IssuedCertificate | null> {
+    const snap = await getDoc(fsDoc(db, 'certificates', code));
+    return snap.exists() ? { code, ...(snap.data() as Omit<IssuedCertificate, 'code'>) } : null;
+  }
+
+  /** Registra a emissão (cada download gera um novo código) e devolve o código. */
+  private async register(teacher: Teacher): Promise<string> {
+    const profile = this.auth.profile();
+    const code = Array.from(crypto.getRandomValues(new Uint8Array(10)), (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
+    await setDoc(fsDoc(db, 'certificates', code), {
+      directorId: this.auth.user()?.uid,
+      teacherId: teacher.id,
+      teacherName: teacher.name,
+      subject: teacher.subject,
+      course: teacher.course,
+      workloadHours: teacher.workloadHours,
+      schoolName: profile?.schoolName ?? '',
+      directorName: profile?.name ?? '',
+      issuedAt: serverTimestamp(),
+    });
+    return code;
+  }
+
   async generate(teacher: Teacher): Promise<Uint8Array> {
     const { template, slots, textColor } = certificateConfig;
     const schoolName = this.auth.profile()?.schoolName ?? '';
+    const directorName = this.auth.profile()?.name ?? '';
+    const code = await this.register(teacher);
     const issuedAt = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
 
     const { doc, page } = await this.createBasePage(template);
@@ -42,6 +75,21 @@ export class CertificateService {
         `concluiu o curso "${teacher.course}" com carga horária de ${teacher.workloadHours} horas.`,
     );
     draw(slots.footer, `${schoolName} - ${issuedAt}`);
+
+    if (!template) {
+      const { width, height } = page.getSize();
+      const y = height - slots.signature.y * height + slots.signature.size * 1.2;
+      const half = ((slots.signature.maxWidth ?? 0.4) * width) / 2;
+      page.drawLine({
+        start: { x: slots.signature.x * width - half, y },
+        end: { x: slots.signature.x * width + half, y },
+        thickness: 0.8,
+        color,
+      });
+    }
+    draw({ ...slots.signature, bold: true }, directorName);
+    draw({ ...slots.signature, y: slots.signature.y + 0.03, bold: false }, `Diretor(a) - ${schoolName}`);
+    draw(slots.verification, `Código de verificação: ${code} - ${this.verificationUrl(code)}`);
 
     return doc.save();
   }

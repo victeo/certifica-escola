@@ -18,7 +18,9 @@ Angular 22 + Firebase (Auth, Firestore, Hosting). Certificados são gerados no n
 
 - Admin entra em `/login`, vai em **Convidar diretor(a)**, informa a escola e envia o link `/convite/<código>` (válido por 7 dias, uso único).
 - O diretor abre o link, cria a conta e cadastra professores (nome, e-mail, CPF, disciplina, curso, carga horária).
-- **Baixar certificado** gera o PDF do professor.
+- **Baixar certificado** gera o PDF do professor, com a assinatura do diretor (nome e escola) e um **código de verificação**. Cada download registra a emissão em `certificates/{código}`.
+- Qualquer pessoa confere a autenticidade em `/verificar/<código>` (link impresso no certificado).
+- O admin vê, na própria tela, os convites, os diretores (com nº de professores) e os professores de todas as escolas.
 
 ## Modelo do certificado
 

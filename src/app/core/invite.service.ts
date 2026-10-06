@@ -9,9 +9,10 @@ import {
   serverTimestamp,
   setDoc,
   Timestamp,
+  where,
 } from 'firebase/firestore';
 import { auth, db } from './firebase';
-import { Invite } from './models';
+import { DirectorRecord, Invite, UserProfile } from './models';
 
 const INVITE_VALIDITY_DAYS = 7;
 
@@ -35,6 +36,14 @@ export class InviteService {
   async list(): Promise<Invite[]> {
     const snap = await getDocs(query(collection(db, 'invites'), orderBy('createdAt', 'desc')));
     return snap.docs.map((d) => ({ code: d.id, ...(d.data() as Omit<Invite, 'code'>) }));
+  }
+
+  /** Somente admin: diretores cadastrados. */
+  async listDirectors(): Promise<DirectorRecord[]> {
+    const snap = await getDocs(query(collection(db, 'users'), where('role', '==', 'director')));
+    return snap.docs
+      .map((d) => ({ uid: d.id, ...(d.data() as UserProfile) }))
+      .sort((a, b) => a.schoolName.localeCompare(b.schoolName, 'pt-BR'));
   }
 
   remove(code: string) {

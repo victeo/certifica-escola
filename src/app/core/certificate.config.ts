@@ -24,7 +24,14 @@ export interface TextSlot {
 
 export const certificateConfig: {
   template: TemplateSource | null;
-  slots: { title: TextSlot; teacherName: TextSlot; body: TextSlot; footer: TextSlot };
+  slots: {
+    title: TextSlot;
+    teacherName: TextSlot;
+    body: TextSlot;
+    footer: TextSlot;
+    signature: TextSlot;
+    verification: TextSlot;
+  };
   textColor: [number, number, number];
 } = {
   template: null,
@@ -33,6 +40,8 @@ export const certificateConfig: {
     title: { x: 0.5, y: 0.25, size: 40, bold: true },
     teacherName: { x: 0.5, y: 0.45, size: 30, bold: true, maxWidth: 0.8 },
     body: { x: 0.5, y: 0.56, size: 16, maxWidth: 0.7 },
-    footer: { x: 0.5, y: 0.82, size: 12 },
+    footer: { x: 0.5, y: 0.7, size: 12 },
+    signature: { x: 0.5, y: 0.86, size: 12, maxWidth: 0.4 },
+    verification: { x: 0.5, y: 0.94, size: 9, maxWidth: 0.9 },
   },
 };

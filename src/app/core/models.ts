@@ -2,6 +2,10 @@ import { Timestamp } from 'firebase/firestore';
 
 export type Role = 'admin' | 'director';
 
+export interface DirectorRecord extends UserProfile {
+  uid: string;
+}
+
 export interface UserProfile {
   name: string;
   email: string;
@@ -29,4 +33,17 @@ export interface TeacherData {
 
 export interface Teacher extends TeacherData {
   id: string;
+  directorId?: string;
+}
+
+/** Registro público de um certificado emitido, consultável pelo código de verificação. */
+export interface IssuedCertificate {
+  code: string;
+  teacherName: string;
+  subject: string;
+  course: string;
+  workloadHours: number;
+  schoolName: string;
+  directorName: string;
+  issuedAt: Timestamp;
 }

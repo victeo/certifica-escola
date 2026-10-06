@@ -8,6 +8,7 @@ export const routes: Routes = [
     path: 'convite/:code',
     loadComponent: () => import('./pages/accept-invite/accept-invite').then((m) => m.AcceptInvite),
   },
+  { path: 'verificar/:code', loadComponent: () => import('./pages/verify/verify').then((m) => m.Verify) },
   {
     path: 'admin',
     canActivate: [roleGuard('admin')],
