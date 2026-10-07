@@ -2,7 +2,6 @@ import { inject, Service } from '@angular/core';
 import {
   addDoc,
   collection,
-  deleteDoc,
   doc,
   getDocs,
   query,
@@ -11,8 +10,9 @@ import {
   where,
 } from 'firebase/firestore';
 import { AuthService } from './auth.service';
+import { commitInChunks } from './batch';
 import { db } from './firebase';
-import { Teacher, TeacherData } from './models';
+import { CertificateRecord, Teacher, TeacherData } from './models';
 
 @Service()
 export class TeacherService {
@@ -24,28 +24,38 @@ export class TeacherService {
     return uid;
   }
 
+  /** Professores do diretor logado. */
   async list(): Promise<Teacher[]> {
     const snap = await getDocs(query(collection(db, 'teachers'), where('directorId', '==', this.uid)));
-    return snap.docs
-      .map((d) => ({ id: d.id, ...(d.data() as TeacherData) }))
-      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Teacher, 'id'>) }));
+  }
+
+  /** Certificados emitidos pelo diretor logado. */
+  async listCertificates(): Promise<CertificateRecord[]> {
+    const snap = await getDocs(query(collection(db, 'certificates'), where('directorId', '==', this.uid)));
+    return snap.docs.map((d) => ({ code: d.id, ...(d.data() as Omit<CertificateRecord, 'code'>) }));
   }
 
   /** Somente admin: todos os professores de todas as escolas. */
   async listAll(): Promise<Teacher[]> {
     const snap = await getDocs(collection(db, 'teachers'));
-    return snap.docs.map((d) => ({ id: d.id, ...(d.data() as TeacherData & { directorId: string }) }));
+    return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Teacher, 'id'>) }));
   }
 
   async add(data: TeacherData): Promise<void> {
-    await addDoc(collection(db, 'teachers'), { ...data, directorId: this.uid, createdAt: serverTimestamp() });
+    await addDoc(collection(db, 'teachers'), {
+      ...data,
+      directorId: this.uid,
+      schoolName: this.auth.profile()?.schoolName ?? '',
+      createdAt: serverTimestamp(),
+    });
   }
 
   update(id: string, data: TeacherData) {
     return updateDoc(doc(db, 'teachers', id), { ...data });
   }
 
-  remove(id: string) {
-    return deleteDoc(doc(db, 'teachers', id));
+  removeMany(ids: string[]) {
+    return commitInChunks(ids.map((id) => (batch) => batch.delete(doc(db, 'teachers', id))));
   }
 }

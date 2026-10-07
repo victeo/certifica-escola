@@ -12,7 +12,13 @@ export const routes: Routes = [
   {
     path: 'admin',
     canActivate: [roleGuard('admin')],
-    loadComponent: () => import('./pages/admin/admin').then((m) => m.Admin),
+    loadComponent: () => import('./pages/admin/admin-shell').then((m) => m.AdminShell),
+    children: [
+      { path: '', pathMatch: 'full', loadComponent: () => import('./pages/admin/overview').then((m) => m.AdminOverview) },
+      { path: 'escolas', loadComponent: () => import('./pages/admin/schools').then((m) => m.AdminSchools) },
+      { path: 'professores', loadComponent: () => import('./pages/admin/teachers').then((m) => m.AdminTeachers) },
+      { path: 'relatorios', loadComponent: () => import('./pages/admin/reports').then((m) => m.AdminReports) },
+    ],
   },
   {
     path: 'diretor',
