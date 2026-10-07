@@ -11,10 +11,9 @@ Angular 22 + Firebase (Auth, Firestore, Hosting). Certificados são gerados no n
 1. Crie um projeto no [Firebase Console](https://console.firebase.google.com) e ative **Authentication → E-mail/senha** e **Firestore**.
 2. Copie `.env.example` para `.env` e preencha com a configuração do app Web (Console Firebase > Configurações do projeto > Seus apps); é o único lugar com credenciais. (O `.env` e os arquivos gerados `src/app/core/firebase.config.ts` e `.firebaserc` nunca vão para o Git; são recriados a cada `npm start`, `build`, `test` e `deploy`).
 3. Publique as regras: `npx firebase login && npx firebase deploy --only firestore`.
-4. **Crie o primeiro admin** (não há tela para isso, por segurança):
-   - Authentication → *Add user* (e-mail e senha) e copie o UID.
-   - Firestore → coleção `users` → documento com esse UID:
-     `{ name: "Seu nome", email: "...", role: "admin", schoolName: "Administração" }`.
+4. **Crie o primeiro admin** (não há tela para isso, por segurança; as regras do Firestore impedem criá-lo pelo navegador):
+   - Console Firebase > Configurações do projeto > Contas de serviço > *Gerar nova chave privada*. Guarde o JSON **fora do repositório** e aponte `FIREBASE_SERVICE_ACCOUNT_FILE` para ele no `.env`.
+   - Rode `npm run create-admin -- --email voce@exemplo.com --name "Seu nome"`. Sem `ADMIN_PASSWORD` no ambiente, uma senha forte é gerada e exibida uma única vez. Se o e-mail já existir no Authentication, o usuário é apenas promovido.
 
 ## Fluxo
 
