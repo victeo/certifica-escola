@@ -1,146 +1,131 @@
-import { Component, inject, resource, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, computed, inject, resource, signal } from '@angular/core';
+import { AuthService } from '../../core/auth.service';
 import { CertificateService } from '../../core/certificate.service';
-import { Teacher } from '../../core/models';
+import { Teacher, TeacherData, TeacherRow } from '../../core/models';
 import { TeacherService } from '../../core/teacher.service';
 import { AppHeader } from '../../shared/app-header';
 import { errorMessage } from '../../shared/error-message';
+import { Modal } from '../../shared/modal';
+import { StatCard } from '../../shared/stat-card';
+import { TeacherForm } from '../../shared/teacher-form';
+import { TeacherList } from '../../shared/teacher-list';
 
 @Component({
   selector: 'app-director',
-  imports: [ReactiveFormsModule, AppHeader],
+  imports: [AppHeader, Modal, StatCard, TeacherForm, TeacherList],
   template: `
     <app-header />
     <main class="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
-      <section class="card" aria-labelledby="form-title">
-        <h2 id="form-title" class="section-title">
-          <span aria-hidden="true">{{ editingId() ? '✏️' : '➕' }}</span>
-          {{ editingId() ? 'Editar professor(a)' : 'Adicionar professor(a)' }}
-        </h2>
-        <form [formGroup]="form" (ngSubmit)="save()" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          @for (f of fields; track f.name) {
-            <div>
-              <label [for]="f.name" class="field-label">{{ f.label }}</label>
-              <input [id]="f.name" [type]="f.type" [formControlName]="f.name" [attr.inputmode]="f.inputmode" class="field-input" />
-            </div>
-          }
-          <div class="flex flex-wrap items-end gap-3 sm:col-span-2 lg:col-span-3">
-            <button type="submit" [disabled]="form.invalid || busy()" class="btn-accent">
-              {{ editingId() ? 'Salvar alterações' : 'Adicionar professor' }}
-            </button>
-            @if (editingId()) {
-              <button type="button" class="btn-ghost" (click)="cancelEdit()">Cancelar</button>
-            }
-          </div>
-        </form>
-        @if (error()) {
-          <p role="alert" class="alert-error mt-4">{{ error() }}</p>
-        }
+      <section aria-label="Resumo" class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <app-stat label="Professores" [value]="rows().length" />
+        <app-stat label="Disciplinas" [value]="subjectCount()" />
+        <app-stat label="Certificados emitidos" [value]="issuedTotal()" />
+        <app-stat label="Sem certificado" [value]="withoutCertificate()" hint="Professores que ainda não receberam" />
       </section>
 
       <section class="card" aria-labelledby="list-title">
-        <h2 id="list-title" class="section-title">
-          <span aria-hidden="true">🧑‍🏫</span> Professores
-          <span class="badge bg-navy-100 text-navy-900">{{ teachers.value()?.length ?? 0 }}</span>
-        </h2>
-        @if (teachers.isLoading()) {
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 id="list-title" class="section-title !mb-0"><span aria-hidden="true">🧑‍🏫</span> Professores</h2>
+          <button type="button" class="btn-accent" (click)="openNew()">+ Adicionar professor</button>
+        </div>
+        @if (error()) {
+          <p role="alert" class="alert-error mb-4">{{ error() }}</p>
+        }
+        @if (data.isLoading()) {
           <p>Carregando…</p>
-        } @else if (!teachers.value()?.length) {
-          <p class="empty">Nenhum professor cadastrado ainda. Use o formulário acima para começar.</p>
         } @else {
-          <table class="rtable">
-            <thead>
-              <tr>
-                <th scope="col">Nome</th>
-                <th scope="col">E-mail</th>
-                <th scope="col">Disciplina</th>
-                <th scope="col"><span class="sr-only">Ações</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (t of teachers.value(); track t.id) {
-                <tr>
-                  <td data-label="Nome" class="font-bold text-navy-900">{{ t.name }}</td>
-                  <td data-label="E-mail">{{ t.email }}</td>
-                  <td data-label="Disciplina">{{ t.subject || '—' }}</td>
-                  <td class="actions">
-                    <div class="flex flex-wrap justify-end gap-2">
-                      <button type="button" class="btn-primary btn-sm" (click)="download(t)"
-                        [attr.aria-label]="'Baixar certificado de ' + t.name">Certificado</button>
-                      <button type="button" class="btn-ghost btn-sm" (click)="edit(t)"
-                        [attr.aria-label]="'Editar ' + t.name">Editar</button>
-                      <button type="button" class="btn-danger btn-sm" (click)="remove(t)"
-                        [attr.aria-label]="'Excluir ' + t.name">Excluir</button>
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+          <app-teacher-list
+            [teachers]="rows()"
+            [allowCertificate]="true"
+            (edit)="openEdit($event)"
+            (remove)="remove($event)"
+            (certificate)="download($event)"
+          />
         }
       </section>
     </main>
+
+    <app-modal [heading]="editing() ? 'Editar professor(a)' : 'Adicionar professor(a)'" [(open)]="modalOpen">
+      <app-teacher-form
+        [teacher]="editing()"
+        [busy]="busy()"
+        [error]="formError()"
+        (save)="save($event)"
+        (cancel)="modalOpen.set(false)"
+      />
+    </app-modal>
   `,
 })
 export class Director {
+  private readonly auth = inject(AuthService);
   private readonly service = inject(TeacherService);
   private readonly certificates = inject(CertificateService);
 
-  protected readonly teachers = resource({ loader: () => this.service.list() });
-  protected readonly busy = signal(false);
-  protected readonly error = signal('');
-  protected readonly editingId = signal<string | null>(null);
-
-  protected readonly fields = [
-    { name: 'name', label: 'Nome completo', type: 'text', inputmode: null },
-    { name: 'email', label: 'E-mail', type: 'email', inputmode: null },
-    { name: 'subject', label: 'Disciplina (opcional)', type: 'text', inputmode: null },
-  ] as const;
-
-  protected readonly form = inject(FormBuilder).nonNullable.group({
-    name: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
-    subject: [''],
+  protected readonly data = resource({
+    loader: async () => {
+      const [teachers, certs] = await Promise.all([this.service.list(), this.service.listCertificates()]);
+      return { teachers, certs };
+    },
   });
 
-  protected async save() {
-    if (this.form.invalid) return;
+  protected readonly busy = signal(false);
+  protected readonly error = signal('');
+  protected readonly formError = signal('');
+  protected readonly modalOpen = signal(false);
+  protected readonly editing = signal<Teacher | null>(null);
+
+  protected readonly rows = computed<TeacherRow[]>(() => {
+    const { teachers, certs } = this.data.value() ?? { teachers: [], certs: [] };
+    const counts = new Map<string, number>();
+    for (const c of certs) counts.set(c.teacherId, (counts.get(c.teacherId) ?? 0) + 1);
+    const profile = this.auth.profile();
+    return teachers.map((t) => ({
+      ...t,
+      school: profile?.schoolName ?? '',
+      directorName: profile?.name ?? '',
+      certs: counts.get(t.id) ?? 0,
+    }));
+  });
+
+  protected readonly subjectCount = computed(() => new Set(this.rows().map((t) => t.subject).filter(Boolean)).size);
+  protected readonly issuedTotal = computed(() => this.rows().reduce((n, t) => n + t.certs, 0));
+  protected readonly withoutCertificate = computed(() => this.rows().filter((t) => t.certs === 0).length);
+
+  protected openNew() {
+    this.editing.set(null);
+    this.formError.set('');
+    this.modalOpen.set(true);
+  }
+
+  protected openEdit(t: Teacher) {
+    this.editing.set(t);
+    this.formError.set('');
+    this.modalOpen.set(true);
+  }
+
+  protected async save(data: TeacherData) {
     this.busy.set(true);
-    this.error.set('');
+    this.formError.set('');
     try {
-      const raw = this.form.getRawValue();
-      const data = { ...raw, name: raw.name.trim(), subject: raw.subject.trim() };
-      const id = this.editingId();
-      if (id) await this.service.update(id, data);
+      const current = this.editing();
+      if (current) await this.service.update(current.id, data);
       else await this.service.add(data);
-      this.cancelEdit();
-      this.teachers.reload();
+      this.modalOpen.set(false);
+      this.data.reload();
     } catch (e) {
-      this.error.set(errorMessage(e));
+      this.formError.set(errorMessage(e));
     } finally {
       this.busy.set(false);
     }
   }
 
-  protected edit(t: Teacher) {
-    this.editingId.set(t.id);
-    this.form.setValue({
-      name: t.name,
-      email: t.email,
-      subject: t.subject,
-    });
-  }
-
-  protected cancelEdit() {
-    this.editingId.set(null);
-    this.form.reset();
-  }
-
-  protected async remove(t: Teacher) {
-    if (!confirm(`Excluir ${t.name}?`)) return;
+  protected async remove(rows: Teacher[]) {
+    const label = rows.length === 1 ? rows[0].name : `${rows.length} professores`;
+    if (!confirm(`Excluir ${label}? Esta ação não pode ser desfeita.`)) return;
+    this.error.set('');
     try {
-      await this.service.remove(t.id);
-      this.teachers.reload();
+      await this.service.removeMany(rows.map((r) => r.id));
+      this.data.reload();
     } catch (e) {
       this.error.set(errorMessage(e));
     }
@@ -150,8 +135,9 @@ export class Director {
     this.error.set('');
     try {
       await this.certificates.download(t);
+      this.data.reload();
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : errorMessage(e));
+      this.error.set(e instanceof Error && !('code' in e) ? e.message : errorMessage(e));
     }
   }
 }

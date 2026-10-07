@@ -9,6 +9,7 @@ import {
   serverTimestamp,
   setDoc,
   Timestamp,
+  updateDoc,
   where,
 } from 'firebase/firestore';
 import { auth, db } from './firebase';
@@ -44,6 +45,12 @@ export class InviteService {
     return snap.docs
       .map((d) => ({ uid: d.id, ...(d.data() as UserProfile) }))
       .sort((a, b) => a.schoolName.localeCompare(b.schoolName, 'pt-BR'));
+  }
+
+  /** Renova a validade do convite por mais 7 dias a partir de agora. */
+  renew(code: string) {
+    const expiresAt = Timestamp.fromMillis(Date.now() + INVITE_VALIDITY_DAYS * 24 * 60 * 60 * 1000);
+    return updateDoc(doc(db, 'invites', code), { expiresAt });
   }
 
   remove(code: string) {

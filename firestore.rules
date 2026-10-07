@@ -41,7 +41,13 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.used == true
         && getAfter(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.usedBy == uid;
 
-      allow update, delete: if false;
+      // Admin edita dados do diretor (nome e escola) e pode remover o perfil (revoga o acesso).
+      allow update: if isAdmin()
+        && resource.data.role == 'director'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'schoolName'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0
+        && request.resource.data.schoolName is string && request.resource.data.schoolName.size() > 0;
+      allow delete: if isAdmin() && resource.data.role == 'director';
     }
 
     // Convites. O código é um UUID aleatório: quem tem o link consegue ler (get), mas ninguém lista.
@@ -54,6 +60,11 @@ service cloud.firestore {
         && request.resource.data.schoolName.size() > 0;
       allow delete: if isAdmin();
 
+      // Admin edita o nome da escola e renova a validade.
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['schoolName', 'expiresAt'])
+        && request.resource.data.schoolName is string && request.resource.data.schoolName.size() > 0;
+
       // Marcar como usado: somente o novo usuário, uma única vez, mexendo só nos campos de uso.
       allow update: if signedIn()
         && resource.data.used == false
@@ -63,26 +74,35 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedBy', 'usedAt']);
     }
 
-    // Professores: cada diretor acessa apenas os seus.
+    // Professores: cada diretor acessa apenas os seus; o admin vê e gerencia todos.
     match /teachers/{id} {
       allow read: if isAdmin() || (isDirector() && resource.data.directorId == request.auth.uid);
 
+      // A escola é gravada na criação, sempre igual à do perfil do diretor.
       allow create: if isDirector()
         && request.resource.data.directorId == request.auth.uid
+        && request.resource.data.get('schoolName', '') == userDoc(request.auth.uid).data.schoolName
         && validTeacher(request.resource.data);
 
-      allow update: if isDirector()
-        && resource.data.directorId == request.auth.uid
-        && request.resource.data.directorId == request.auth.uid
-        && validTeacher(request.resource.data);
+      allow update: if validTeacher(request.resource.data)
+        && request.resource.data.directorId == resource.data.directorId
+        && (
+          (isDirector()
+            && resource.data.directorId == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'email', 'subject', 'schoolName'])
+            && request.resource.data.get('schoolName', userDoc(request.auth.uid).data.schoolName) == userDoc(request.auth.uid).data.schoolName)
+          ||
+          (isAdmin()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'email', 'subject', 'schoolName']))
+        );
 
-      allow delete: if isDirector() && resource.data.directorId == request.auth.uid;
+      allow delete: if isAdmin() || (isDirector() && resource.data.directorId == request.auth.uid);
     }
 
     // Certificados emitidos: verificação pública por código (get), sem listagem, imutáveis.
     match /certificates/{code} {
       allow get: if true;
-      allow list: if isAdmin();
+      allow list: if isAdmin() || (isDirector() && resource.data.directorId == request.auth.uid);
       allow create: if isDirector()
         && request.resource.data.directorId == request.auth.uid
         && request.resource.data.issuedAt == request.time
@@ -94,7 +114,8 @@ service cloud.firestore {
     function validTeacher(d) {
       return d.name is string && d.name.size() > 0 && d.name.size() <= 200
         && d.email is string
-        && d.subject is string;
+        && d.get('subject', '') is string
+        && d.get('schoolName', '') is string;
     }
   }
 }

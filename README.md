@@ -17,11 +17,19 @@ Angular 22 + Firebase (Auth, Firestore, Hosting). Certificados são gerados no n
 
 ## Fluxo
 
-- Admin entra em `/login`, vai em **Convidar diretor(a)**, informa a escola e envia o link `/convite/<código>` (válido por 7 dias, uso único).
-- O diretor abre o link, cria a conta e cadastra professores (nome, e-mail e disciplina opcional).
-- **Baixar certificado** gera o PDF do professor, com a assinatura do diretor (nome e escola) e um **código de verificação**. Cada download registra a emissão em `certificates/{código}`.
+**Administrador** (`/admin`)
+- **Visão geral:** totais de escolas, diretores, professores e certificados; gráfico de professores por escola; alertas (convites pendentes/expirados, escolas sem professores, professores sem certificado).
+- **Escolas e convites:** gera convites (link `/convite/<código>`, 7 dias, uso único) e mantém o acesso a eles depois: *Ver link*, *Renovar*, *Excluir*. Cada escola é um cartão com seus convites e diretores; dá para renomear a escola, editar um diretor (nome/escola) ou remover o acesso dele. Busca e filtros (convite pendente, sem diretor, sem professores).
+- **Professores:** lista única de todas as escolas, com busca, filtros (escola, disciplina, certificado), ordenação, **agrupamento por escola, diretor ou disciplina**, seleção em lote, edição, exclusão e exportação CSV.
+- **Relatórios:** professores por escola, por disciplina, diretores, escolas sem professores, professores sem certificado, certificados emitidos, convites e cadastros por mês; cada um com exportação CSV e impressão.
+
+**Diretor** (`/diretor`)
+- Indicadores (professores, disciplinas, certificados emitidos, sem certificado).
+- Adiciona, **edita** e **exclui** (um ou vários) professores; busca, filtros, ordenação e agrupamento por disciplina; exporta CSV.
+- **Certificado** gera o PDF do professor, com código de verificação; cada download registra a emissão em `certificates/{código}`.
 - Qualquer pessoa confere a autenticidade em `/verificar/<código>` (link impresso no certificado).
-- O admin vê, na própria tela, os convites, os diretores (com nº de professores) e os professores de todas as escolas.
+
+Remover o acesso de um diretor apaga só o perfil dele (o login deixa de funcionar); os professores cadastrados permanecem e continuam visíveis para o admin. A conta no Authentication pode ser apagada depois, pelo Console.
 
 ## Modelo do certificado
 
