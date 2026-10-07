@@ -30,12 +30,22 @@ interface DrawOptions {
 export class CertificateService {
   private readonly auth = inject(AuthService);
 
+  /** Emite um certificado novo (registra a emissão) e baixa o PDF. */
   async download(teacher: Teacher): Promise<void> {
-    const bytes = await this.generate(teacher);
+    const code = await this.issue(teacher);
+    this.save(await this.buildPdf(teacher.name, code), teacher.name);
+  }
+
+  /** Baixa o PDF de uma emissão já registrada (página pública do link enviado por e-mail). */
+  async downloadIssued(issued: IssuedCertificate): Promise<void> {
+    this.save(await this.buildPdf(issued.teacherName, issued.code), issued.teacherName);
+  }
+
+  private save(bytes: Uint8Array, name: string) {
     const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/pdf' }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = `certificado-${this.slug(teacher.name)}.pdf`;
+    link.download = `certificado-${this.slug(name)}.pdf`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -49,8 +59,8 @@ export class CertificateService {
     return snap.exists() ? { code, ...(snap.data() as Omit<IssuedCertificate, 'code'>) } : null;
   }
 
-  /** Registra a emissão (cada download gera um novo código) e devolve o código. */
-  private async register(teacher: Teacher): Promise<string> {
+  /** Registra uma emissão (código de verificação novo) e devolve o código. */
+  async issue(teacher: Teacher): Promise<string> {
     const profile = this.auth.profile();
     const code = Array.from(crypto.getRandomValues(new Uint8Array(10)), (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
     await setDoc(fsDoc(db, 'certificates', code), {
@@ -68,11 +78,15 @@ export class CertificateService {
   }
 
   async generate(teacher: Teacher): Promise<Uint8Array> {
+    return this.buildPdf(teacher.name, await this.issue(teacher));
+  }
+
+  /** Monta o PDF (frente e verso) para um nome e um código de verificação. */
+  async buildPdf(name: string, code: string): Promise<Uint8Array> {
     const [frontBg, backBg] = await Promise.all([
       this.fetchBytes(cfg.templates.front),
       this.fetchBytes(cfg.templates.back),
     ]);
-    const code = await this.register(teacher);
 
     const doc = await PDFDocument.create();
     const fonts: Fonts = {
@@ -81,7 +95,7 @@ export class CertificateService {
     };
     const verification = `Código de verificação: ${code}  -  ${this.verificationUrl(code)}`;
 
-    this.drawFront(await this.newPage(doc, frontBg), fonts, teacher.name, verification);
+    this.drawFront(await this.newPage(doc, frontBg), fonts, name, verification);
     this.drawBack(await this.newPage(doc, backBg), fonts, verification);
     return doc.save();
   }

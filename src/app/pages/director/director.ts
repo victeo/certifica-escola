@@ -1,6 +1,8 @@
 import { Component, computed, inject, resource, signal } from '@angular/core';
 import { AuthService } from '../../core/auth.service';
+import { CertificateMailer, describeMailResult } from '../../core/certificate-mailer';
 import { CertificateService } from '../../core/certificate.service';
+import { latestCodeByTeacher } from '../../core/format';
 import { Teacher, TeacherData, TeacherRow } from '../../core/models';
 import { TeacherService } from '../../core/teacher.service';
 import { AppHeader } from '../../shared/app-header';
@@ -31,12 +33,25 @@ import { TeacherList } from '../../shared/teacher-list';
         @if (error()) {
           <p role="alert" class="alert-error mb-4">{{ error() }}</p>
         }
+        @if (notice(); as n) {
+          <p [class]="n.ok ? 'alert-success mb-4' : 'alert-error mb-4'" role="status">{{ n.text }}</p>
+        }
+        @if (!mailer.configured) {
+          <p class="mb-4 rounded-xl bg-pencil-300/40 px-3 py-2 text-sm text-navy-900">
+            O envio por e-mail ainda não foi configurado neste ambiente (MAIL_WORKER_URL).
+          </p>
+        }
         @if (data.isLoading()) {
           <p>Carregando…</p>
         } @else {
           <app-teacher-list
             [teachers]="rows()"
             [allowCertificate]="true"
+            [allowEmail]="mailer.configured"
+            [canIssueEmail]="true"
+            [sendingIds]="mailer.sendingIds()"
+            (email)="sendEmail([$event])"
+            (emailMany)="sendEmail($event)"
             (edit)="openEdit($event)"
             (remove)="remove($event)"
             (certificate)="download($event)"
@@ -60,6 +75,7 @@ export class Director {
   private readonly auth = inject(AuthService);
   private readonly service = inject(TeacherService);
   private readonly certificates = inject(CertificateService);
+  protected readonly mailer = inject(CertificateMailer);
 
   protected readonly data = resource({
     loader: async () => {
@@ -73,14 +89,17 @@ export class Director {
   protected readonly formError = signal('');
   protected readonly modalOpen = signal(false);
   protected readonly editing = signal<Teacher | null>(null);
+  protected readonly notice = signal<{ text: string; ok: boolean } | null>(null);
 
   protected readonly rows = computed<TeacherRow[]>(() => {
     const { teachers, certs } = this.data.value() ?? { teachers: [], certs: [] };
     const counts = new Map<string, number>();
     for (const c of certs) counts.set(c.teacherId, (counts.get(c.teacherId) ?? 0) + 1);
     const profile = this.auth.profile();
+    const latest = latestCodeByTeacher(certs);
     return teachers.map((t) => ({
       ...t,
+      latestCode: latest.get(t.id),
       school: profile?.schoolName ?? '',
       directorName: profile?.name ?? '',
       certs: counts.get(t.id) ?? 0,
@@ -129,6 +148,14 @@ export class Director {
     } catch (e) {
       this.error.set(errorMessage(e));
     }
+  }
+
+  protected async sendEmail(rows: TeacherRow[]) {
+    if (rows.length > 1 && !confirm(`Enviar o certificado por e-mail para ${rows.length} professores?`)) return;
+    this.notice.set(null);
+    const result = await this.mailer.send(rows, true);
+    this.notice.set(describeMailResult(result));
+    this.data.reload();
   }
 
   protected async download(t: Teacher) {

@@ -84,16 +84,19 @@ service cloud.firestore {
         && request.resource.data.get('schoolName', '') == userDoc(request.auth.uid).data.schoolName
         && validTeacher(request.resource.data);
 
+      // lastEmailedAt (data do último envio do certificado) só aceita a hora do servidor.
       allow update: if validTeacher(request.resource.data)
         && request.resource.data.directorId == resource.data.directorId
+        && (request.resource.data.get('lastEmailedAt', null) == resource.data.get('lastEmailedAt', null)
+            || request.resource.data.lastEmailedAt == request.time)
         && (
           (isDirector()
             && resource.data.directorId == request.auth.uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'email', 'subject', 'schoolName'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'email', 'subject', 'schoolName', 'lastEmailedAt'])
             && request.resource.data.get('schoolName', userDoc(request.auth.uid).data.schoolName) == userDoc(request.auth.uid).data.schoolName)
           ||
           (isAdmin()
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'email', 'subject', 'schoolName']))
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'email', 'subject', 'schoolName', 'lastEmailedAt']))
         );
 
       allow delete: if isAdmin() || (isDirector() && resource.data.directorId == request.auth.uid);

@@ -10,7 +10,9 @@
     "deploy": "bash scripts/deploy.sh tudo",
     "deploy:hosting": "bash scripts/deploy.sh hosting",
     "deploy:regras": "bash scripts/deploy.sh regras",
-    "create-admin": "node scripts/create-admin.mjs"
+    "create-admin": "node scripts/create-admin.mjs",
+    "test:worker": "node --test worker/test/index.test.mjs",
+    "worker:deploy": "cd worker && npx wrangler deploy"
   },
   "private": true,
   "packageManager": "npm@11.16.0",

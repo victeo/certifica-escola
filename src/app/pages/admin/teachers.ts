@@ -1,5 +1,6 @@
 import { Component, inject, input, signal } from '@angular/core';
 import { AdminDataService } from '../../core/admin-data.service';
+import { CertificateMailer, describeMailResult } from '../../core/certificate-mailer';
 import { TeacherData, TeacherRow } from '../../core/models';
 import { errorMessage } from '../../shared/error-message';
 import { Modal } from '../../shared/modal';
@@ -15,11 +16,18 @@ import { TeacherList } from '../../shared/teacher-list';
       @if (error()) {
         <p role="alert" class="alert-error mb-4">{{ error() }}</p>
       }
+      @if (notice(); as n) {
+        <p [class]="n.ok ? 'alert-success mb-4' : 'alert-error mb-4'" role="status">{{ n.text }}</p>
+      }
       <app-teacher-list
         [teachers]="data.teacherRows()"
         [showSchool]="true"
         [showDirector]="true"
         [allowCertificate]="true"
+        [allowEmail]="mailer.configured"
+        [sendingIds]="mailer.sendingIds()"
+        (email)="sendEmail([$event])"
+        (emailMany)="sendEmail($event)"
         [initialSchool]="escola() ?? ''"
         (edit)="openEdit($event)"
         (remove)="remove($event)"
@@ -40,6 +48,8 @@ import { TeacherList } from '../../shared/teacher-list';
 })
 export class AdminTeachers {
   protected readonly data = inject(AdminDataService);
+  protected readonly mailer = inject(CertificateMailer);
+  protected readonly notice = signal<{ text: string; ok: boolean } | null>(null);
   /** Escola vinda da URL (?escola=Nome), usada como filtro inicial. */
   readonly escola = input<string>();
 
@@ -68,6 +78,13 @@ export class AdminTeachers {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  protected async sendEmail(rows: TeacherRow[]) {
+    if (rows.length > 1 && !confirm(`Enviar o certificado por e-mail para ${rows.length} professores?`)) return;
+    this.notice.set(null);
+    this.notice.set(describeMailResult(await this.mailer.send(rows, false)));
+    await this.data.load();
   }
 
   protected async remove(rows: TeacherRow[]) {

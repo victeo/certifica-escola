@@ -105,4 +105,52 @@ describe('TeacherList', () => {
     await set('tl-search', 'zzz');
     expect(text()).toContain('Nenhum professor encontrado');
   });
+
+  describe('envio por e-mail', () => {
+    const withMail = DATA.map((t) => (t.id === '1' ? { ...t, latestCode: 'C1', lastEmailedAt: Timestamp.fromDate(new Date(2026, 8, 20)) } : { ...t, latestCode: t.certs ? 'C' : undefined }));
+
+    beforeEach(async () => {
+      fixture.componentRef.setInput('teachers', withMail);
+      fixture.componentRef.setInput('allowEmail', true);
+      fixture.componentRef.setInput('canIssueEmail', false);
+      await fixture.whenStable();
+    });
+
+    const buttons = () => Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('tbody button'));
+
+    it('shows last-sent date and send/resend labels', () => {
+      expect(text()).toContain('20/09/2026');
+      expect(text()).toContain('Reenviar e-mail');
+      expect(text()).toContain('Enviar por e-mail');
+    });
+
+    it('filters by sent / not sent', async () => {
+      await set('tl-mail', 'sent');
+      expect(names()).toEqual(['Carla']);
+      await set('tl-mail', 'unsent');
+      expect(names()).toEqual(['Ana', 'Bruno', 'Davi']);
+    });
+
+    it('disables sending for teachers without certificate when the sender cannot issue', () => {
+      const ana = buttons().find((b) => b.getAttribute('aria-label')?.includes('para Ana'))!;
+      const carla = buttons().find((b) => b.getAttribute('aria-label')?.includes('para Carla'))!;
+      expect(ana.disabled).toBe(true);
+      expect(carla.disabled).toBe(false);
+    });
+
+    it('emits single and bulk e-mail requests', async () => {
+      const single: string[] = [];
+      const bulk: string[][] = [];
+      fixture.componentInstance.email.subscribe((t) => single.push(t.name));
+      fixture.componentInstance.emailMany.subscribe((r) => bulk.push(r.map((t) => t.name).sort()));
+      buttons().find((b) => b.getAttribute('aria-label')?.includes('para Carla'))!.click();
+      const boxes = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>('tbody input[type="checkbox"]');
+      boxes[0].click();
+      boxes[2].click();
+      await fixture.whenStable();
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).find((b) => b.textContent?.includes('Enviar por e-mail ('))!.click();
+      expect(single).toEqual(['Carla']);
+      expect(bulk).toEqual([['Ana', 'Carla']]);
+    });
+  });
 });

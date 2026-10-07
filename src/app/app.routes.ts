@@ -8,6 +8,10 @@ export const routes: Routes = [
     path: 'convite/:code',
     loadComponent: () => import('./pages/accept-invite/accept-invite').then((m) => m.AcceptInvite),
   },
+  {
+    path: 'certificado/:code',
+    loadComponent: () => import('./pages/certificate/certificate-download').then((m) => m.CertificateDownload),
+  },
   { path: 'verificar/:code', loadComponent: () => import('./pages/verify/verify').then((m) => m.Verify) },
   {
     path: 'admin',

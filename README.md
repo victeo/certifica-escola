@@ -31,6 +31,12 @@ Angular 22 + Firebase (Auth, Firestore, Hosting). Certificados são gerados no n
 
 Remover o acesso de um diretor apaga só o perfil dele (o login deixa de funcionar); os professores cadastrados permanecem e continuam visíveis para o admin. A conta no Authentication pode ser apagada depois, pelo Console.
 
+## Envio do certificado por e-mail
+
+O diretor (e o admin) envia o certificado ao e-mail cadastrado do professor: botão **Enviar por e-mail** (ou **Reenviar**) em cada linha, e **Enviar por e-mail (n)** para os selecionados. O e-mail leva um link para a página pública `/certificado/<código>`, que gera o PDF, e o código de verificação. A lista mostra o **último envio** e tem filtro "já enviado / ainda não enviado"; o admin tem os relatórios "Certificados enviados" e "ainda não enviados".
+
+O envio passa por um Cloudflare Worker (gratuito) que guarda a chave do Resend; veja `worker/README.md` para configurar e publicar. Reenviar reaproveita a emissão mais recente; se o professor ainda não tem certificado, o diretor emite um automaticamente (o admin só envia os já emitidos).
+
 ## Modelo do certificado
 
 PDF de 2 páginas (frente e verso). A arte vem do Canva e fica em `public/certificado/frente.png` e `verso.png` (exportadas em PNG, A4 paisagem); título, assinaturas, frase de Eurípedes e conteúdo programático fazem parte dela, então para mudá-los edite o design no Canva e exporte de novo. O sistema escreve por cima só o que varia: texto com o nome do participante, data e código de verificação. Esses textos, as horas e o período ficam em `src/app/core/event.config.ts` (`training`); as posições, em `src/app/core/certificate.config.ts`.

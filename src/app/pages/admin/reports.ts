@@ -144,6 +144,26 @@ export class AdminReports {
           .map((c) => [c.code, c.teacherName, c.schoolName, c.directorName, formatDate(c.issuedAt as Timestamp | null)]),
       },
       {
+        id: 'enviados',
+        title: 'Certificados enviados por e-mail',
+        description: 'Professores que já receberam o certificado por e-mail (data do último envio)',
+        header: ['Professor(a)', 'E-mail', 'Escola', 'Último envio'],
+        rows: teachers
+          .filter((t) => t.lastEmailedAt)
+          .sort((a, b) => (b.lastEmailedAt?.toMillis() ?? 0) - (a.lastEmailedAt?.toMillis() ?? 0))
+          .map((t) => [t.name, t.email, t.school, formatDate(t.lastEmailedAt)]),
+      },
+      {
+        id: 'nao-enviados',
+        title: 'Certificados ainda não enviados',
+        description: 'Professores que ainda não receberam o certificado por e-mail',
+        header: ['Professor(a)', 'E-mail', 'Escola', 'Certificado emitido'],
+        rows: teachers
+          .filter((t) => !t.lastEmailedAt)
+          .sort((a, b) => compareText(a.school, b.school) || compareText(a.name, b.name))
+          .map((t) => [t.name, t.email, t.school, t.certs ? 'Sim' : 'Não']),
+      },
+      {
         id: 'convites',
         title: 'Convites',
         description: 'Situação de todos os convites enviados',

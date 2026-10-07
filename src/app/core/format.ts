@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
-import { Invite, InviteStatus } from './models';
+import { CertificateRecord, Invite, InviteStatus } from './models';
 
 export function inviteStatus(inv: Invite): InviteStatus {
   if (inv.used) return 'used';
@@ -24,4 +24,14 @@ export function formatMonth(ts: Timestamp | null | undefined): string {
 
 export function compareText(a: string, b: string): number {
   return a.localeCompare(b, 'pt-BR', { sensitivity: 'base' });
+}
+
+/** Código da emissão mais recente de cada professor (teacherId → código). */
+export function latestCodeByTeacher(records: CertificateRecord[]): Map<string, string> {
+  const latest = new Map<string, CertificateRecord>();
+  for (const r of records) {
+    const current = latest.get(r.teacherId);
+    if (!current || (r.issuedAt?.toMillis() ?? 0) > (current.issuedAt?.toMillis() ?? 0)) latest.set(r.teacherId, r);
+  }
+  return new Map([...latest].map(([id, r]) => [id, r.code]));
 }

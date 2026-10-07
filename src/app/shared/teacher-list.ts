@@ -6,6 +6,7 @@ import { TeacherRow } from '../core/models';
 type SortKey = 'name' | 'subject' | 'school' | 'recent';
 type GroupKey = 'none' | 'school' | 'director' | 'subject';
 type CertFilter = 'all' | 'with' | 'without';
+type MailFilter = 'all' | 'sent' | 'unsent';
 
 interface Group {
   key: string;
@@ -54,6 +55,16 @@ const NO_SUBJECT = '(Sem disciplina)';
           </select>
         </div>
       }
+      @if (allowEmail()) {
+        <div>
+          <label for="tl-mail" class="field-label">Envio por e-mail</label>
+          <select id="tl-mail" class="field-input" [value]="mail()" (change)="mail.set($any($event.target).value)">
+            <option value="all">Todos</option>
+            <option value="sent">Já enviado</option>
+            <option value="unsent">Ainda não enviado</option>
+          </select>
+        </div>
+      }
       <div>
         <label for="tl-sort" class="field-label">Ordenar por</label>
         <select id="tl-sort" class="field-input" [value]="sort()" (change)="sort.set($any($event.target).value)">
@@ -82,6 +93,11 @@ const NO_SUBJECT = '(Sem disciplina)';
         }
       </p>
       <div class="flex flex-wrap gap-2">
+        @if (selectedRows().length && allowEmail()) {
+          <button type="button" class="btn-primary btn-sm" (click)="emailMany.emit(selectedRows())">
+            Enviar por e-mail ({{ selectedRows().length }})
+          </button>
+        }
         @if (selectedRows().length) {
           <button type="button" class="btn-danger btn-sm" (click)="remove.emit(selectedRows())">
             Excluir selecionados ({{ selectedRows().length }})
@@ -119,6 +135,7 @@ const NO_SUBJECT = '(Sem disciplina)';
                 @if (showSchool() && group() !== 'school') { <th scope="col">Escola</th> }
                 @if (showDirector() && group() !== 'director') { <th scope="col">Diretor(a)</th> }
                 @if (allowCertificate()) { <th scope="col">Certificados</th> }
+                @if (allowEmail()) { <th scope="col">Último envio</th> }
                 <th scope="col"><span class="sr-only">Ações</span></th>
               </tr>
             </thead>
@@ -138,8 +155,18 @@ const NO_SUBJECT = '(Sem disciplina)';
                       @else { <span class="badge bg-slate-100 text-slate-800">Nenhum</span> }
                     </td>
                   }
+                  @if (allowEmail()) {
+                    <td data-label="Último envio">{{ t.lastEmailedAt ? formatDate(t.lastEmailedAt) : '—' }}</td>
+                  }
                   <td class="actions">
                     <div class="flex flex-wrap justify-end gap-2">
+                      @if (allowEmail()) {
+                        <button type="button" class="btn-ghost btn-sm" (click)="email.emit(t)"
+                          [disabled]="sendingIds().has(t.id) || !t.latestCode && !canIssueEmail()"
+                          [attr.aria-label]="(t.lastEmailedAt ? 'Reenviar' : 'Enviar') + ' certificado por e-mail para ' + t.name">
+                          {{ sendingIds().has(t.id) ? 'Enviando…' : t.lastEmailedAt ? 'Reenviar e-mail' : 'Enviar por e-mail' }}
+                        </button>
+                      }
                       @if (allowCertificate()) {
                         <button type="button" class="btn-primary btn-sm" (click)="certificate.emit(t)"
                           [attr.aria-label]="'Baixar certificado de ' + t.name">Certificado</button>
@@ -164,17 +191,27 @@ export class TeacherList {
   readonly showSchool = input(false);
   readonly showDirector = input(false);
   readonly allowCertificate = input(false);
+  /** Mostra envio por e-mail (coluna, filtro e botões). */
+  readonly allowEmail = input(false);
+  /** Se verdadeiro, o envio também emite o certificado quando ainda não existe (diretor). */
+  readonly canIssueEmail = input(false);
+  /** IDs com envio em andamento. */
+  readonly sendingIds = input<ReadonlySet<string>>(new Set());
   /** Filtro de escola inicial (ex.: vindo da tela de escolas). */
   readonly initialSchool = input('');
 
   readonly edit = output<TeacherRow>();
   readonly remove = output<TeacherRow[]>();
   readonly certificate = output<TeacherRow>();
+  readonly email = output<TeacherRow>();
+  readonly emailMany = output<TeacherRow[]>();
 
   protected readonly search = signal('');
   protected readonly school = signal('');
   protected readonly subject = signal('');
   protected readonly cert = signal<CertFilter>('all');
+  protected readonly mail = signal<MailFilter>('all');
+  protected readonly formatDate = formatDate;
   protected readonly sort = signal<SortKey>('name');
   protected readonly group = signal<GroupKey>('none');
   protected readonly selected = signal<ReadonlySet<string>>(new Set());
@@ -187,12 +224,14 @@ export class TeacherList {
     const school = this.school();
     const subject = this.subject();
     const cert = this.cert();
+    const mail = this.mail();
     const rows = this.teachers().filter(
       (t) =>
         (!q || `${t.name} ${t.email} ${t.subject} ${t.school} ${t.directorName}`.toLowerCase().includes(q)) &&
         (!school || t.school === school) &&
         (!subject || (t.subject || NO_SUBJECT) === subject) &&
-        (cert === 'all' || (cert === 'with' ? t.certs > 0 : t.certs === 0)),
+        (cert === 'all' || (cert === 'with' ? t.certs > 0 : t.certs === 0)) &&
+        (mail === 'all' || (mail === 'sent' ? !!t.lastEmailedAt : !t.lastEmailedAt)),
     );
     const key = this.sort();
     return rows.sort((a, b) => {
@@ -216,7 +255,7 @@ export class TeacherList {
 
   protected readonly selectedRows = computed(() => this.teachers().filter((t) => this.selected().has(t.id)));
   protected readonly hasFilters = computed(
-    () => !!(this.search() || this.school() || this.subject() || this.cert() !== 'all'),
+    () => !!(this.search() || this.school() || this.subject() || this.cert() !== 'all' || this.mail() !== 'all'),
   );
 
   constructor() {
@@ -257,13 +296,14 @@ export class TeacherList {
     this.school.set('');
     this.subject.set('');
     this.cert.set('all');
+    this.mail.set('all');
   }
 
   protected exportCsv() {
     downloadCsv(
       'professores',
-      ['Nome', 'E-mail', 'Disciplina', 'Escola', 'Diretor(a)', 'Certificados emitidos', 'Cadastrado em'],
-      this.filtered().map((t) => [t.name, t.email, t.subject, t.school, t.directorName, t.certs, formatDate(t.createdAt)]),
+      ['Nome', 'E-mail', 'Disciplina', 'Escola', 'Diretor(a)', 'Certificados emitidos', 'Último envio por e-mail', 'Cadastrado em'],
+      this.filtered().map((t) => [t.name, t.email, t.subject, t.school, t.directorName, t.certs, formatDate(t.lastEmailedAt), formatDate(t.createdAt)]),
     );
   }
 

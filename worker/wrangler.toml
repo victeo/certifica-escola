@@ -1,0 +1,25 @@
+# Cloudflare Worker que envia o certificado por e-mail (Resend) para o professor.
+# Deploy: cd worker && npx wrangler login && npx wrangler secret put RESEND_API_KEY && npx wrangler deploy
+name = "escola-espirita-mailer"
+main = "src/index.mjs"
+compatibility_date = "2026-01-01"
+
+[vars]
+# ID do projeto Firebase (o mesmo FIREBASE_PROJECT_ID do .env do app).
+FIREBASE_PROJECT_ID = "SEU_PROJETO"
+# Origens autorizadas a chamar o Worker, separadas por vírgula (o site em produção e o ambiente local).
+ALLOWED_ORIGINS = "https://SEU_PROJETO.web.app,https://SEU_PROJETO.firebaseapp.com,http://localhost:4200"
+# Endereço público do site (usado no link do e-mail).
+SITE_URL = "https://SEU_PROJETO.web.app"
+FROM_EMAIL = "Escola Espírita, a Escola que Educa <notificacao@osceia.org.br>"
+# Quando "true", o diretor recebe cópia oculta (BCC) de cada e-mail enviado.
+BCC_DIRECTOR = "true"
+# Textos do e-mail (mantenha em sincronia com src/app/core/event.config.ts).
+EVENT_NAME = "5861º Encontro Fraterno Auta de Souza"
+TRAINING_TITLE = "Treinamento Escola Espírita"
+EVENT_PLACE = "Goiânia-GO"
+EVENT_PERIOD = "18 a 20/09/2026"
+QUOTE_TEXT = "Poderoso é o sol da verdade"
+QUOTE_AUTHOR = "Eurípedes Barsanulfo"
+
+# O segredo RESEND_API_KEY NÃO fica aqui: use `npx wrangler secret put RESEND_API_KEY`.

@@ -1,7 +1,7 @@
 import { computed, inject, Service, signal } from '@angular/core';
 import { collection, doc, getDocs, WriteBatch } from 'firebase/firestore';
 import { commitInChunks } from './batch';
-import { compareText, inviteStatus } from './format';
+import { compareText, inviteStatus, latestCodeByTeacher } from './format';
 import { db } from './firebase';
 import { InviteService } from './invite.service';
 import { CertificateRecord, DirectorRecord, Invite, SchoolSummary, Teacher, TeacherRow } from './models';
@@ -35,6 +35,7 @@ export class AdminDataService {
   readonly teacherRows = computed<TeacherRow[]>(() => {
     const directors = this.directorsByUid();
     const certs = this.certsByTeacher();
+    const latest = latestCodeByTeacher(this.certificates());
     return this.teachers().map((t) => {
       const director = t.directorId ? directors.get(t.directorId) : undefined;
       return {
@@ -42,6 +43,7 @@ export class AdminDataService {
         school: t.schoolName || director?.schoolName || NO_SCHOOL,
         directorName: director?.name ?? '(Diretor removido)',
         certs: certs.get(t.id) ?? 0,
+        latestCode: latest.get(t.id),
       };
     });
   });

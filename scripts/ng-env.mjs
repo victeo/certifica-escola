@@ -50,6 +50,7 @@ const keys = [
   'FIREBASE_AUTH_DOMAIN',
   'FIREBASE_PROJECT_ID',
   'FIREBASE_APP_ID',
+  'MAIL_WORKER_URL',
 ];
 
 // Popula process.env atual do Node (para Vitest e ferramentas baseadas em Node)

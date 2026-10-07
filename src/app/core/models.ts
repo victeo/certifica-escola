@@ -35,6 +35,8 @@ export interface Teacher extends TeacherData {
   /** Escola gravada no cadastro (pode faltar em cadastros antigos). */
   schoolName?: string;
   createdAt?: Timestamp;
+  /** Última vez que o certificado foi enviado por e-mail. */
+  lastEmailedAt?: Timestamp;
 }
 
 /** Professor com dados já resolvidos para listagens e relatórios. */
@@ -43,6 +45,8 @@ export interface TeacherRow extends Teacher {
   directorName: string;
   /** Quantidade de certificados emitidos para o professor. */
   certs: number;
+  /** Código da emissão mais recente (usado no envio por e-mail). */
+  latestCode?: string;
 }
 
 /** Registro de emissão usado em contagens (um por download). */
