@@ -2,6 +2,7 @@ import { inject, Service } from '@angular/core';
 import { doc as fsDoc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from 'pdf-lib';
 import { AuthService } from './auth.service';
+import { eventConfig, eventFullName, quote, siteName } from './event.config';
 import { certificateConfig, TextSlot } from './certificate.config';
 import { db } from './firebase';
 import { IssuedCertificate, Teacher } from './models';
@@ -72,9 +73,11 @@ export class CertificateService {
     draw(
       slots.body,
       `Certificamos que ${teacher.name}, professor(a) de ${teacher.subject} da ${schoolName}, ` +
-        `concluiu o curso "${teacher.course}" com carga horária de ${teacher.workloadHours} horas.`,
+        `participou do ${eventFullName}, realizado em ${eventConfig.city} em ${eventConfig.dates}, ` +
+        `e concluiu o curso "${teacher.course}" com carga horária de ${teacher.workloadHours} horas.`,
     );
-    draw(slots.footer, `${schoolName} - ${issuedAt}`);
+    draw(slots.footer, `${siteName} - emitido em ${issuedAt}`);
+    draw({ ...slots.quote, bold: false }, `"${quote.text}" - ${quote.author}`);
 
     if (!template) {
       const { width, height } = page.getSize();

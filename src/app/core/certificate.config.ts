@@ -29,6 +29,7 @@ export const certificateConfig: {
     teacherName: TextSlot;
     body: TextSlot;
     footer: TextSlot;
+    quote: TextSlot;
     signature: TextSlot;
     verification: TextSlot;
   };
@@ -40,8 +41,9 @@ export const certificateConfig: {
     title: { x: 0.5, y: 0.25, size: 40, bold: true },
     teacherName: { x: 0.5, y: 0.45, size: 30, bold: true, maxWidth: 0.8 },
     body: { x: 0.5, y: 0.56, size: 16, maxWidth: 0.7 },
-    footer: { x: 0.5, y: 0.7, size: 12 },
-    signature: { x: 0.5, y: 0.86, size: 12, maxWidth: 0.4 },
+    footer: { x: 0.5, y: 0.68, size: 12 },
+    quote: { x: 0.5, y: 0.76, size: 11, maxWidth: 0.8 },
+    signature: { x: 0.5, y: 0.87, size: 12, maxWidth: 0.4 },
     verification: { x: 0.5, y: 0.94, size: 9, maxWidth: 0.9 },
   },
 };

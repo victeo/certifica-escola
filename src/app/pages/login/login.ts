@@ -11,7 +11,7 @@ import { errorMessage } from '../../shared/error-message';
   template: `
     <app-auth-shell>
       <h1 class="mb-1 text-3xl font-semibold text-navy-900">Bem-vindo(a)!</h1>
-      <p class="mb-6 text-slate-700">Entre para gerenciar seus professores e certificados.</p>
+      <p class="mb-6 text-slate-700">Entre para cadastrar seus professores e emitir os certificados do Encontro Fraterno Auta de Souza.</p>
       <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
         <div>
           <label for="email" class="field-label">E-mail</label>

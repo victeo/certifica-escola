@@ -1,4 +1,6 @@
-# Certifica Escola
+# Escola Espírita, a Escola que Educa
+
+Certificados para professores que participam do **Encontro Fraterno Auta de Souza** (Goiânia-GO). Nomes, edição, datas e a frase de Eurípedes Barsanulfo ficam em `src/app/core/event.config.ts`.
 
 Admin convida diretores por link; diretores cadastram seus professores (salvos no Firestore) e baixam os certificados em PDF.
 
