@@ -47,11 +47,7 @@ Thumbs.db
 scripts/create-admin.*
 *serviceAccountKey*.json
 
-# Environment files
+# Environment files (.env nunca vai para o Git)
 .env
 .env.*
 !.env.example
-
-# Generated from .env by scripts/set-env.mjs
-src/app/core/firebase.config.ts
-.firebaserc
