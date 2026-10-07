@@ -9,7 +9,7 @@ Angular 22 + Firebase (Auth, Firestore, Hosting). Certificados são gerados no n
 ## Configuração (uma vez)
 
 1. Crie um projeto no [Firebase Console](https://console.firebase.google.com) e ative **Authentication → E-mail/senha** e **Firestore**.
-2. Copie `.env.example` para `.env` e preencha com a configuração do app Web (Console Firebase > Configurações do projeto > Seus apps); ajuste o ID do projeto em `.firebaserc`. (O `.env` e o arquivo gerado `src/app/core/firebase.config.ts` nunca vão para o Git).
+2. Copie `.env.example` para `.env` e preencha com a configuração do app Web (Console Firebase > Configurações do projeto > Seus apps); é o único lugar com credenciais. (O `.env` e os arquivos gerados `src/app/core/firebase.config.ts` e `.firebaserc` nunca vão para o Git; são recriados a cada `npm start`, `build`, `test` e `deploy`).
 3. Publique as regras: `npx firebase login && npx firebase deploy --only firestore`.
 4. **Crie o primeiro admin** (não há tela para isso, por segurança):
    - Authentication → *Add user* (e-mail e senha) e copie o UID.
@@ -36,7 +36,7 @@ npm run deploy:hosting   # só o site
 npm run deploy:regras    # só firestore.rules
 ```
 
-Primeiro rode `npx firebase login` (ou exporte `FIREBASE_TOKEN`, gerado com `npx firebase login:ci`). O script se recusa a publicar enquanto `.env` e `.firebaserc` ainda tiverem os valores de exemplo.
+Primeiro rode `npx firebase login` (ou defina `FIREBASE_TOKEN` no `.env`, gerado com `npx firebase login:ci`). O script se recusa a publicar enquanto o `.env` ainda tiver os valores de exemplo.
 
 ## Desenvolvimento
 
