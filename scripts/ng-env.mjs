@@ -64,19 +64,14 @@ const defineArgs = [];
 if (command === 'build' || command === 'serve') {
   for (const key of keys) {
     const val = env[key] ?? '';
-    defineArgs.push(
-      '--define',
-      `process.env.${key}="${val}"`,
-      '--define',
-      `process.env["${key}"]="${val}"`
-    );
+    defineArgs.push('--define', `process.env.${key}=${JSON.stringify(val)}`);
   }
 }
 
 const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const child = spawn(npxCmd, ['ng', command, ...extraArgs, ...defineArgs], {
   stdio: 'inherit',
-  shell: true,
+  shell: process.platform === 'win32',
   env: process.env,
 });
 
