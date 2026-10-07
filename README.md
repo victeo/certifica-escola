@@ -18,14 +18,14 @@ Angular 22 + Firebase (Auth, Firestore, Hosting). Certificados são gerados no n
 ## Fluxo
 
 - Admin entra em `/login`, vai em **Convidar diretor(a)**, informa a escola e envia o link `/convite/<código>` (válido por 7 dias, uso único).
-- O diretor abre o link, cria a conta e cadastra professores (nome, e-mail, CPF, disciplina, curso, carga horária).
+- O diretor abre o link, cria a conta e cadastra professores (nome, e-mail e disciplina opcional).
 - **Baixar certificado** gera o PDF do professor, com a assinatura do diretor (nome e escola) e um **código de verificação**. Cada download registra a emissão em `certificates/{código}`.
 - Qualquer pessoa confere a autenticidade em `/verificar/<código>` (link impresso no certificado).
 - O admin vê, na própria tela, os convites, os diretores (com nº de professores) e os professores de todas as escolas.
 
 ## Modelo do certificado
 
-Por padrão sai um certificado simples com moldura. Para usar a sua arte, coloque o arquivo em `public/certificado/` e ajuste `src/app/core/certificate.config.ts` (`template` e posições dos textos).
+PDF de 2 páginas (frente e verso). A arte vem do Canva e fica em `public/certificado/frente.png` e `verso.png` (exportadas em PNG, A4 paisagem); título, assinaturas, frase de Eurípedes e conteúdo programático fazem parte dela, então para mudá-los edite o design no Canva e exporte de novo. O sistema escreve por cima só o que varia: texto com o nome do participante, data e código de verificação. Esses textos, as horas e o período ficam em `src/app/core/event.config.ts` (`training`); as posições, em `src/app/core/certificate.config.ts`.
 
 ## Deploy
 

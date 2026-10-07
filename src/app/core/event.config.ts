@@ -14,3 +14,14 @@ export const quote = {
   text: 'Poderoso é o sol da verdade',
   author: 'Eurípedes Barsanulfo',
 } as const;
+
+/**
+ * Dados variáveis do certificado. Título, assinaturas, frase de Eurípedes e conteúdo
+ * programático fazem parte da arte (Canva) em `public/certificado/`.
+ */
+export const training = {
+  issuer: 'A Direção das Obras Sociais do Centro Espírita Irmão Áureo',
+  hours: 30,
+  period: '18 a 20/09/2026',
+  signedAt: 'Goiânia, 20 de Setembro de 2026.',
+} as const;
