@@ -43,9 +43,9 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 
-# Local scripts & credentials (não versionados)
-scripts/create-admin.*
+# Credenciais (não versionadas)
 *serviceAccountKey*.json
+*service-account*.json
 
 # Environment files
 .env
