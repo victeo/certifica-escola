@@ -115,7 +115,6 @@ import { errorMessage } from '../../shared/error-message';
                 <th scope="col">Escola</th>
                 <th scope="col">Disciplina</th>
                 <th scope="col">Curso</th>
-                <th scope="col">Carga horária</th>
               </tr>
             </thead>
             <tbody>
@@ -125,7 +124,6 @@ import { errorMessage } from '../../shared/error-message';
                   <td data-label="Escola">{{ schoolOf(t.directorId) }}</td>
                   <td data-label="Disciplina">{{ t.subject }}</td>
                   <td data-label="Curso">{{ t.course }}</td>
-                  <td data-label="Carga horária">{{ t.workloadHours }} h</td>
                 </tr>
               }
             </tbody>

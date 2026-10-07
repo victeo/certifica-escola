@@ -44,7 +44,7 @@ export class CertificateService {
       teacherName: teacher.name,
       subject: teacher.subject,
       course: teacher.course,
-      workloadHours: teacher.workloadHours,
+      ...(teacher.workloadHours ? { workloadHours: teacher.workloadHours } : {}),
       schoolName: profile?.schoolName ?? '',
       directorName: profile?.name ?? '',
       issuedAt: serverTimestamp(),
@@ -74,7 +74,7 @@ export class CertificateService {
       slots.body,
       `Certificamos que ${teacher.name}, professor(a) de ${teacher.subject} da ${schoolName}, ` +
         `participou do ${eventFullName}, realizado em ${eventConfig.city} em ${eventConfig.dates}, ` +
-        `e concluiu o curso "${teacher.course}" com carga horária de ${teacher.workloadHours} horas.`,
+        `e concluiu o curso "${teacher.course}"${teacher.workloadHours ? ` com carga horária de ${teacher.workloadHours} horas` : ''}.`,
     );
     draw(slots.footer, `${siteName} - emitido em ${issuedAt}`);
     draw({ ...slots.quote, bold: false }, `"${quote.text}" - ${quote.author}`);

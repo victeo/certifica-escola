@@ -18,7 +18,9 @@ import { CertificateService } from '../../core/certificate.service';
             <div><dt class="inline font-bold">Professor(a): </dt><dd class="inline">{{ c.teacherName }}</dd></div>
             <div><dt class="inline font-bold">Disciplina: </dt><dd class="inline">{{ c.subject }}</dd></div>
             <div><dt class="inline font-bold">Curso: </dt><dd class="inline">{{ c.course }}</dd></div>
-            <div><dt class="inline font-bold">Carga horária: </dt><dd class="inline">{{ c.workloadHours }} h</dd></div>
+            @if (c.workloadHours) {
+              <div><dt class="inline font-bold">Carga horária: </dt><dd class="inline">{{ c.workloadHours }} h</dd></div>
+            }
             <div><dt class="inline font-bold">Escola: </dt><dd class="inline">{{ c.schoolName }}</dd></div>
             <div><dt class="inline font-bold">Diretor(a): </dt><dd class="inline">{{ c.directorName }}</dd></div>
             <div><dt class="inline font-bold">Emitido em: </dt><dd class="inline">{{ c.issuedAt?.toDate() | date: 'dd/MM/yyyy' }}</dd></div>

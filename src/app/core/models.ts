@@ -25,10 +25,11 @@ export interface Invite {
 export interface TeacherData {
   name: string;
   email: string;
-  cpf: string;
   subject: string;
   course: string;
-  workloadHours: number;
+  /** Legado: não é mais solicitado no cadastro. */
+  cpf?: string;
+  workloadHours?: number;
 }
 
 export interface Teacher extends TeacherData {
@@ -42,7 +43,7 @@ export interface IssuedCertificate {
   teacherName: string;
   subject: string;
   course: string;
-  workloadHours: number;
+  workloadHours?: number;
   schoolName: string;
   directorName: string;
   issuedAt: Timestamp;
