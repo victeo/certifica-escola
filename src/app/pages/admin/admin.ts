@@ -114,8 +114,7 @@ import { errorMessage } from '../../shared/error-message';
                 <th scope="col">Professor(a)</th>
                 <th scope="col">Escola</th>
                 <th scope="col">Disciplina</th>
-                <th scope="col">Curso</th>
-                <th scope="col">Carga horária</th>
+                <th scope="col">E-mail</th>
               </tr>
             </thead>
             <tbody>
@@ -123,9 +122,8 @@ import { errorMessage } from '../../shared/error-message';
                 <tr>
                   <td data-label="Professor(a)" class="font-bold text-navy-900">{{ t.name }}</td>
                   <td data-label="Escola">{{ schoolOf(t.directorId) }}</td>
-                  <td data-label="Disciplina">{{ t.subject }}</td>
-                  <td data-label="Curso">{{ t.course }}</td>
-                  <td data-label="Carga horária">{{ t.workloadHours }} h</td>
+                  <td data-label="Disciplina">{{ t.subject || '—' }}</td>
+                  <td data-label="E-mail">{{ t.email }}</td>
                 </tr>
               }
             </tbody>

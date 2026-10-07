@@ -1,49 +1,28 @@
 /**
- * Modelo do certificado.
+ * Layout do certificado (A4 paisagem, 2 páginas: frente e verso).
  *
- * Coloque a arte em `public/certificado/` (PNG, JPG ou PDF) e aponte `template` para ela,
- * por exemplo: { url: '/certificado/modelo.png', kind: 'png' }.
- * Com `template: null` é gerado um certificado simples com moldura.
- *
- * As posições são frações da página (0–1), medidas a partir do canto superior esquerdo.
- * `x` é o centro horizontal do texto; `y` é a linha de base.
+ * A arte de fundo fica em `public/certificado/` (fonte editável em `design/certificado/`).
+ * As posições são frações da página (0–1) a partir do canto superior esquerdo;
+ * `y` é a linha de base do texto. Os textos ficam em `event.config.ts`.
  */
-export interface TemplateSource {
-  url: string;
-  kind: 'png' | 'jpg' | 'pdf';
-}
-
-export interface TextSlot {
-  x: number;
-  y: number;
-  size: number;
-  /** Largura máxima como fração da página; o texto quebra linha ao passar disso. */
-  maxWidth?: number;
-  bold?: boolean;
-}
-
-export const certificateConfig: {
-  template: TemplateSource | null;
-  slots: {
-    title: TextSlot;
-    teacherName: TextSlot;
-    body: TextSlot;
-    footer: TextSlot;
-    quote: TextSlot;
-    signature: TextSlot;
-    verification: TextSlot;
-  };
-  textColor: [number, number, number];
-} = {
-  template: null,
-  textColor: [0.1, 0.1, 0.15],
-  slots: {
-    title: { x: 0.5, y: 0.25, size: 40, bold: true },
-    teacherName: { x: 0.5, y: 0.45, size: 30, bold: true, maxWidth: 0.8 },
-    body: { x: 0.5, y: 0.56, size: 16, maxWidth: 0.7 },
-    footer: { x: 0.5, y: 0.68, size: 12 },
-    quote: { x: 0.5, y: 0.76, size: 11, maxWidth: 0.8 },
-    signature: { x: 0.5, y: 0.87, size: 12, maxWidth: 0.4 },
-    verification: { x: 0.5, y: 0.94, size: 9, maxWidth: 0.9 },
+export const certificateConfig = {
+  templates: { front: '/certificado/frente.png', back: '/certificado/verso.png' },
+  colors: { navy: [0.09, 0.21, 0.49], text: [0.11, 0.14, 0.25], gold: [0.69, 0.49, 0.0] } as Record<string, [number, number, number]>,
+  front: {
+    title: { y: 0.27, size: 27 },
+    heading: { y: 0.375, size: 46 },
+    intro: { y: 0.47, size: 15, maxWidth: 0.74, lineHeight: 1.5 },
+    name: { y: 0.6, size: 26, maxWidth: 0.7 },
+    afterName: { y: 0.665, size: 15, maxWidth: 0.74, lineHeight: 1.5 },
+    signedAt: { y: 0.725, size: 14 },
+    signatures: { lineY: 0.8, labelY: 0.822, leftX: 0.27, rightX: 0.73, lineWidth: 0.3, size: 11 },
+    quote: { y: 0.865, size: 10, maxWidth: 0.78, lineHeight: 1.35 },
+    verification: { y: 0.935, size: 8 },
+  },
+  back: {
+    title: { y: 0.27, size: 24 },
+    heading: { y: 0.37, size: 17 },
+    list: { y: 0.47, size: 15, x: 0.16, maxWidth: 0.68, lineHeight: 1.5, itemGap: 0.012 },
+    verification: { y: 0.935, size: 8 },
   },
 };

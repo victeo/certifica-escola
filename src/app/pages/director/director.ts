@@ -52,9 +52,8 @@ import { errorMessage } from '../../shared/error-message';
             <thead>
               <tr>
                 <th scope="col">Nome</th>
+                <th scope="col">E-mail</th>
                 <th scope="col">Disciplina</th>
-                <th scope="col">Curso</th>
-                <th scope="col">Carga horária</th>
                 <th scope="col"><span class="sr-only">Ações</span></th>
               </tr>
             </thead>
@@ -62,9 +61,8 @@ import { errorMessage } from '../../shared/error-message';
               @for (t of teachers.value(); track t.id) {
                 <tr>
                   <td data-label="Nome" class="font-bold text-navy-900">{{ t.name }}</td>
-                  <td data-label="Disciplina">{{ t.subject }}</td>
-                  <td data-label="Curso">{{ t.course }}</td>
-                  <td data-label="Carga horária">{{ t.workloadHours }} h</td>
+                  <td data-label="E-mail">{{ t.email }}</td>
+                  <td data-label="Disciplina">{{ t.subject || '—' }}</td>
                   <td class="actions">
                     <div class="flex flex-wrap justify-end gap-2">
                       <button type="button" class="btn-primary btn-sm" (click)="download(t)"
@@ -96,19 +94,13 @@ export class Director {
   protected readonly fields = [
     { name: 'name', label: 'Nome completo', type: 'text', inputmode: null },
     { name: 'email', label: 'E-mail', type: 'email', inputmode: null },
-    { name: 'cpf', label: 'CPF', type: 'text', inputmode: 'numeric' },
-    { name: 'subject', label: 'Disciplina', type: 'text', inputmode: null },
-    { name: 'course', label: 'Curso / formação', type: 'text', inputmode: null },
-    { name: 'workloadHours', label: 'Carga horária (horas)', type: 'number', inputmode: 'numeric' },
+    { name: 'subject', label: 'Disciplina (opcional)', type: 'text', inputmode: null },
   ] as const;
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     name: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
-    cpf: ['', [Validators.required, Validators.pattern(/^(\d{11}|\d{3}\.\d{3}\.\d{3}-\d{2})$/)]],
-    subject: ['', Validators.required],
-    course: ['', Validators.required],
-    workloadHours: [0, [Validators.required, Validators.min(1)]],
+    subject: [''],
   });
 
   protected async save() {
@@ -117,7 +109,7 @@ export class Director {
     this.error.set('');
     try {
       const raw = this.form.getRawValue();
-      const data = { ...raw, name: raw.name.trim(), workloadHours: Number(raw.workloadHours) };
+      const data = { ...raw, name: raw.name.trim(), subject: raw.subject.trim() };
       const id = this.editingId();
       if (id) await this.service.update(id, data);
       else await this.service.add(data);
@@ -135,16 +127,13 @@ export class Director {
     this.form.setValue({
       name: t.name,
       email: t.email,
-      cpf: t.cpf,
       subject: t.subject,
-      course: t.course,
-      workloadHours: t.workloadHours,
     });
   }
 
   protected cancelEdit() {
     this.editingId.set(null);
-    this.form.reset({ workloadHours: 0 });
+    this.form.reset();
   }
 
   protected async remove(t: Teacher) {

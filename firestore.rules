@@ -94,10 +94,7 @@ service cloud.firestore {
     function validTeacher(d) {
       return d.name is string && d.name.size() > 0 && d.name.size() <= 200
         && d.email is string
-        && d.cpf is string
-        && d.subject is string
-        && d.course is string
-        && d.workloadHours is number && d.workloadHours > 0;
+        && d.subject is string;
     }
   }
 }
