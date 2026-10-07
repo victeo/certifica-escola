@@ -18,9 +18,12 @@ case "$TARGET" in
   *) echo "Uso: $0 [tudo|hosting|regras]" >&2; exit 1 ;;
 esac
 
+# Sincroniza configuração a partir do .env
+node scripts/set-env.mjs
+
 # Trava: não publica com credenciais ainda não preenchidas.
 if grep -q "SUA_API_KEY\|SEU_PROJETO\|SEU_APP_ID" src/app/core/firebase.config.ts .firebaserc; then
-  echo "Erro: preencha src/app/core/firebase.config.ts e .firebaserc com os dados do seu projeto Firebase." >&2
+  echo "Erro: preencha o arquivo .env (ou variáveis de ambiente) e o .firebaserc com os dados do seu projeto Firebase." >&2
   exit 1
 fi
 

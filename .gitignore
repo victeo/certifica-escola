@@ -42,3 +42,15 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Local scripts & credentials (não versionados)
+scripts/create-admin.*
+*serviceAccountKey*.json
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Generated Firebase configuration
+src/app/core/firebase.config.ts
