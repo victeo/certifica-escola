@@ -74,7 +74,7 @@ export class AcceptInvite {
       await this.auth.registerWithInvite(invite, name.trim(), email, password);
       await this.router.navigateByUrl('/diretor');
     } catch (e) {
-      this.error.set(errorMessage(e));
+      this.error.set(errorMessage(e, 'Convite inválido, já usado ou expirado.'));
     } finally {
       this.loading.set(false);
     }

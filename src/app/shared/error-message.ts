@@ -4,11 +4,12 @@ const MESSAGES: Record<string, string> = {
   'auth/weak-password': 'A senha deve ter pelo menos 6 caracteres.',
   'auth/invalid-email': 'E-mail inválido.',
   'auth/too-many-requests': 'Muitas tentativas. Tente novamente em instantes.',
-  'permission-denied': 'Você não tem permissão para esta ação (convite inválido, usado ou expirado?).',
+  'permission-denied': 'Sem permissão para esta ação. Se o problema persistir, avise o administrador.',
   'profile-not-found': 'Seu cadastro não foi encontrado. Fale com o administrador.',
 };
 
-export function errorMessage(error: unknown): string {
+export function errorMessage(error: unknown, permissionDenied?: string): string {
   const code = (error as { code?: string; message?: string })?.code ?? (error as Error)?.message ?? '';
+  if (permissionDenied && code.endsWith('permission-denied')) return permissionDenied;
   return MESSAGES[code] ?? MESSAGES[code.replace('firestore/', '')] ?? 'Ocorreu um erro inesperado. Tente novamente.';
 }
