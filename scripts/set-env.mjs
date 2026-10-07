@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Script para gerar src/app/core/firebase.config.ts a partir de variáveis de ambiente (.env).
+ * Script para gerar src/app/core/firebase.config.ts e .firebaserc a partir de variáveis de ambiente (.env).
  *
  * Prioridade das variáveis:
  *   1. process.env (variáveis do sistema / CI/CD)
@@ -98,4 +98,11 @@ export const firebaseConfig = {
 `;
 
 fs.writeFileSync(targetFile, fileContent, 'utf-8');
+
+// .firebaserc (projeto usado pelo `firebase deploy`) também vem do .env.
+fs.writeFileSync(
+  path.join(rootDir, '.firebaserc'),
+  JSON.stringify({ projects: { default: projectId } }, null, 2) + '\n',
+  'utf-8',
+);
 console.log(`[set-env] Configuração do Firebase sincronizada a partir do .env (Projeto: ${projectId})`);

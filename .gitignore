@@ -52,5 +52,6 @@ scripts/create-admin.*
 .env.*
 !.env.example
 
-# Generated Firebase configuration
+# Generated from .env by scripts/set-env.mjs
 src/app/core/firebase.config.ts
+.firebaserc

@@ -28,9 +28,15 @@ import { eventConfig, eventFullName, quote, siteName } from '../core/event.confi
       </aside>
       <main class="flex items-center justify-center p-5 sm:p-10">
         <div class="w-full max-w-md">
-          <p class="mb-6 font-display text-2xl text-navy-800 lg:hidden">{{ siteName }}</p>
+          <div class="mb-6 flex items-center gap-4 lg:hidden">
+            <img ngSrc="euripedes-barsanulfo.png" width="300" height="400" alt="Retrato de Eurípedes Barsanulfo"
+              class="size-20 shrink-0 rounded-full border-4 border-pencil-400 object-cover object-top shadow-md" priority />
+            <div>
+              <p class="font-display text-xl leading-tight text-navy-800">{{ siteName }}</p>
+              <p class="mt-1 text-sm text-slate-700">“{{ quote.text }}” — {{ quote.author }}</p>
+            </div>
+          </div>
           <div class="card shadow-lg"><ng-content /></div>
-          <p class="mt-6 text-center text-sm text-slate-700 lg:hidden">“{{ quote.text }}” — {{ quote.author }}</p>
         </div>
       </main>
     </div>
