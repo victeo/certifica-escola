@@ -13,7 +13,6 @@ const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 interface Fonts {
   regular: PDFFont;
   bold: PDFFont;
-  italic: PDFFont;
 }
 
 interface DrawOptions {
@@ -79,7 +78,6 @@ export class CertificateService {
     const fonts: Fonts = {
       regular: await doc.embedFont(StandardFonts.TimesRoman),
       bold: await doc.embedFont(StandardFonts.TimesRomanBold),
-      italic: await doc.embedFont(StandardFonts.TimesRomanItalic),
     };
     const verification = `Código de verificação: ${code}  -  ${this.verificationUrl(code)}`;
 
@@ -90,8 +88,6 @@ export class CertificateService {
 
   private drawFront(page: PDFPage, f: Fonts, name: string, verification: string) {
     const c = cfg.front;
-    this.text(page, training.title, { ...c.title, font: f.bold, color: 'navy' });
-    this.text(page, 'CERTIFICADO', { ...c.heading, font: f.regular, color: 'gold' });
     this.text(page, `${training.issuer}, Entidade patrocinadora do ${eventFullName.toUpperCase()}, certifica que`, {
       ...c.intro,
       font: f.regular,
@@ -99,10 +95,11 @@ export class CertificateService {
     const nameWidth = this.text(page, name, { ...c.name, font: f.bold, color: 'navy' });
     const { width, height } = page.getSize();
     const lineHalf = Math.max(nameWidth, 0.4 * width) / 2 + 12;
+    const lineY = height - (c.name.y + 0.014) * height;
     page.drawLine({
-      start: { x: width / 2 - lineHalf, y: height - (c.name.y + 0.012) * height },
-      end: { x: width / 2 + lineHalf, y: height - (c.name.y + 0.012) * height },
-      thickness: 0.8,
+      start: { x: width / 2 - lineHalf, y: lineY },
+      end: { x: width / 2 + lineHalf, y: lineY },
+      thickness: 1,
       color: this.color('gold'),
     });
     this.text(page, `participou deste Evento, com duração de ${training.hours} horas, entre os dias ${training.period}.`, {
@@ -110,63 +107,11 @@ export class CertificateService {
       font: f.regular,
     });
     this.text(page, training.signedAt, { ...c.signedAt, font: f.regular });
-
-    const sig = c.signatures;
-    for (const [x, label] of [
-      [sig.leftX, training.signatureLabels.left],
-      [sig.rightX, training.signatureLabels.right],
-    ] as const) {
-      const half = (sig.lineWidth * width) / 2;
-      page.drawLine({
-        start: { x: x * width - half, y: height - sig.lineY * height },
-        end: { x: x * width + half, y: height - sig.lineY * height },
-        thickness: 0.9,
-        color: this.color('text'),
-      });
-      this.text(page, label, { x, y: sig.labelY, size: sig.size, font: f.bold });
-    }
-
-    this.text(page, `“${training.quote.text}”`, { ...c.quote, font: f.italic, color: 'navy' });
-    this.text(page, `- ${training.quote.author}`, {
-      y: c.quote.y + 0.035,
-      size: c.quote.size,
-      font: f.bold,
-      color: 'navy',
-    });
     this.text(page, verification, { ...c.verification, font: f.regular });
   }
 
   private drawBack(page: PDFPage, f: Fonts, verification: string) {
-    const c = cfg.back;
-    this.text(page, `${training.title} ${training.year}`, { ...c.title, font: f.bold, color: 'navy' });
-    this.text(page, 'CONTEÚDO PROGRAMÁTICO:', { ...c.heading, font: f.bold, color: 'navy' });
-
-    const { width, height } = page.getSize();
-    let y = c.list.y;
-    for (const item of training.program) {
-      const lines = this.wrap(item, f.regular, c.list.size, c.list.maxWidth * width - 18);
-      lines.forEach((line, i) => {
-        if (i === 0) {
-          page.drawText('•', {
-            x: c.list.x * width,
-            y: height - y * height,
-            size: c.list.size,
-            font: f.bold,
-            color: this.color('gold'),
-          });
-        }
-        page.drawText(line, {
-          x: c.list.x * width + 18,
-          y: height - y * height,
-          size: c.list.size,
-          font: f.regular,
-          color: this.color('text'),
-        });
-        y += (c.list.size * c.list.lineHeight) / height;
-      });
-      y += c.list.itemGap;
-    }
-    this.text(page, verification, { ...c.verification, font: f.regular });
+    this.text(page, verification, { ...cfg.back.verification, font: f.regular });
   }
 
   private async newPage(doc: PDFDocument, png: ArrayBuffer): Promise<PDFPage> {

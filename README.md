@@ -25,7 +25,7 @@ Angular 22 + Firebase (Auth, Firestore, Hosting). Certificados são gerados no n
 
 ## Modelo do certificado
 
-PDF de 2 páginas (frente: texto, assinaturas e frase de Eurípedes; verso: conteúdo programático), com a arte em `public/certificado/` (fontes SVG em `design/certificado/`, regenere com `python3 design/certificado/build.py` e `node design/certificado/render.mjs`). Textos, carga horária e período ficam em `src/app/core/event.config.ts` (`training`); posições em `src/app/core/certificate.config.ts`.
+PDF de 2 páginas (frente e verso). A arte vem do Canva e fica em `public/certificado/frente.png` e `verso.png` (exportadas em PNG, A4 paisagem); título, assinaturas, frase de Eurípedes e conteúdo programático fazem parte dela, então para mudá-los edite o design no Canva e exporte de novo. O sistema escreve por cima só o que varia: texto com o nome do participante, data e código de verificação. Esses textos, as horas e o período ficam em `src/app/core/event.config.ts` (`training`); as posições, em `src/app/core/certificate.config.ts`.
 
 ## Deploy
 
