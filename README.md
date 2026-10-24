@@ -1,50 +1,100 @@
-# Escola Espírita, a Escola que Educa
+# 🎓 Certifica Escola
 
-Certificados para professores que participam do **Encontro Fraterno Auta de Souza** (Goiânia-GO). Nomes, edição, datas e a frase de Eurípedes Barsanulfo ficam em `src/app/core/event.config.ts`.
+[![Angular](https://img.shields.io/badge/Angular-22-DD0031?logo=angular&logoColor=white)](https://angular.dev)
+[![Firebase](https://img.shields.io/badge/Firebase-Auth_%7C_Firestore_%7C_Hosting-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com)
+[![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-green.svg)](LICENSE)
 
-Admin convida diretores por link; diretores cadastram seus professores (salvos no Firestore) e baixam os certificados em PDF.
+Sistema web para **emitir certificados em PDF para professores** que participam de um encontro de formação. O administrador convida os diretores das escolas por link, cada diretor cadastra seus professores e baixa os certificados, e qualquer pessoa pode **verificar a autenticidade** de um certificado por código.
 
-Angular 22 + Firebase (Auth, Firestore, Hosting). Certificados são gerados no navegador com `pdf-lib`.
+Criado para o Encontro Fraterno Auta de Souza (Goiânia-GO). Nome do evento, edição, datas e textos ficam em um único arquivo de configuração, então dá para adaptá-lo a outros eventos.
 
-## Configuração (uma vez)
-
-1. Crie um projeto no [Firebase Console](https://console.firebase.google.com) e ative **Authentication → E-mail/senha** e **Firestore**.
-2. Copie `.env.example` para `.env` e preencha com a configuração do app Web (Console Firebase > Configurações do projeto > Seus apps); é o único lugar com credenciais. (O `.env` e os arquivos gerados `src/app/core/firebase.config.ts` e `.firebaserc` nunca vão para o Git; são recriados a cada `npm start`, `build`, `test` e `deploy`).
-3. Publique as regras: `npx firebase login && npx firebase deploy --only firestore`.
-4. **Crie o primeiro admin** (não há tela para isso, por segurança; as regras do Firestore impedem criá-lo pelo navegador):
-   - Console Firebase > Configurações do projeto > Contas de serviço > *Gerar nova chave privada*. Guarde o JSON **fora do repositório** e aponte `FIREBASE_SERVICE_ACCOUNT_FILE` para ele no `.env`.
-   - Rode `npm run create-admin -- --email voce@exemplo.com --name "Seu nome"`. Sem `ADMIN_PASSWORD` no ambiente, uma senha forte é gerada e exibida uma única vez. Se o e-mail já existir no Authentication, o usuário é apenas promovido.
-
-## Fluxo
+## ✨ Funcionalidades
 
 **Administrador** (`/admin`)
-- **Visão geral:** totais de escolas, diretores, professores e certificados; gráfico de professores por escola; alertas (convites pendentes/expirados, escolas sem professores, professores sem certificado).
-- **Escolas e convites:** gera convites (link `/convite/<código>`, 7 dias, uso único) e mantém o acesso a eles depois: *Ver link*, *Renovar*, *Excluir*. Cada escola é um cartão com seus convites e diretores; dá para renomear a escola, editar um diretor (nome/escola) ou remover o acesso dele. Busca e filtros (convite pendente, sem diretor, sem professores).
-- **Professores:** lista única de todas as escolas, com busca, filtros (escola, disciplina, certificado), ordenação, **agrupamento por escola, diretor ou disciplina**, seleção em lote, edição, exclusão e exportação CSV.
-- **Relatórios:** professores por escola, por disciplina, diretores, escolas sem professores, professores sem certificado, certificados emitidos, convites e cadastros por mês; cada um com exportação CSV e impressão.
+- **Visão geral** com totais de escolas, diretores, professores e certificados, gráfico por escola e alertas (convites pendentes ou expirados, escolas sem professores, professores sem certificado).
+- **Escolas e convites**: gera links de convite (`/convite/<código>`, uso único, validade de 7 dias), com opções de ver, renovar e excluir. Permite renomear escolas e editar ou remover diretores.
+- **Professores**: lista única com busca, filtros, ordenação, agrupamento (por escola, diretor ou disciplina), seleção em lote, edição, exclusão e exportação CSV.
+- **Relatórios** com exportação CSV e impressão: professores por escola ou disciplina, diretores, escolas sem professores, certificados emitidos, convites e cadastros por mês.
 
 **Diretor** (`/diretor`)
-- Indicadores (professores, disciplinas, certificados emitidos, sem certificado).
-- Adiciona, **edita** e **exclui** (um ou vários) professores; busca, filtros, ordenação e agrupamento por disciplina; exporta CSV.
-- **Certificado** gera o PDF do professor, com código de verificação; cada download registra a emissão em `certificates/{código}`.
-- Qualquer pessoa confere a autenticidade em `/verificar/<código>` (link impresso no certificado).
+- Indicadores de professores, disciplinas e certificados emitidos.
+- Cadastro, edição e exclusão (individual ou em lote) de professores, com busca, filtros e exportação CSV.
+- **Geração do certificado em PDF** (frente e verso) com código de verificação. Cada download registra a emissão.
 
-Remover o acesso de um diretor apaga só o perfil dele (o login deixa de funcionar); os professores cadastrados permanecem e continuam visíveis para o admin. A conta no Authentication pode ser apagada depois, pelo Console.
+**Público** (`/verificar/<código>`)
+- Qualquer pessoa confere se um certificado é autêntico pelo link ou código impresso nele.
 
-## Modelo do certificado
+## 🧱 Stack
 
-PDF de 2 páginas (frente e verso). A arte vem do Canva e fica em `public/certificado/frente.png` e `verso.png` (exportadas em PNG, A4 paisagem); título, assinaturas, frase de Eurípedes e conteúdo programático fazem parte dela, então para mudá-los edite o design no Canva e exporte de novo. O sistema escreve por cima só o que varia: texto com o nome do participante, data e código de verificação. Esses textos, as horas e o período ficam em `src/app/core/event.config.ts` (`training`); as posições, em `src/app/core/certificate.config.ts`.
+- **Angular 22** com Signals e componentes standalone
+- **Firebase**: Authentication (e-mail/senha), Firestore e Hosting
+- **pdf-lib**: os PDFs são gerados no navegador, sem servidor
+- Arte do certificado feita no Canva e exportada em PNG
 
-## Deploy
+## 🚀 Como rodar
+
+**Pré-requisitos:** Node.js ≥ 22.22.3 e um projeto Firebase.
+
+```bash
+git clone https://github.com/victeo/certifica-escola.git
+cd certifica-escola
+npm install
+```
+
+### 1. Configure o Firebase
+1. No [Firebase Console](https://console.firebase.google.com), crie um projeto e ative **Authentication → E-mail/senha** e o **Firestore**.
+2. Copie `.env.example` para `.env` e preencha com a configuração do app Web (Configurações do projeto → Seus apps). O `.env` e os arquivos gerados a partir dele (`firebase.config.ts`, `.firebaserc`) não vão para o Git e são recriados a cada `start`, `build`, `test` e `deploy`.
+3. Publique as regras: `npx firebase login && npx firebase deploy --only firestore`.
+
+### 2. Crie o primeiro administrador
+Por segurança, as regras do Firestore impedem criar o primeiro admin pelo navegador.
+
+1. No Console: Configurações do projeto → Contas de serviço → **Gerar nova chave privada**. Guarde o JSON **fora do repositório** e aponte `FIREBASE_SERVICE_ACCOUNT_FILE` para ele no `.env`.
+2. Rode:
+   ```bash
+   npm run create-admin -- --email voce@exemplo.com --name "Seu nome"
+   ```
+   Sem `ADMIN_PASSWORD` no ambiente, uma senha forte é gerada e exibida uma única vez. Se o e-mail já existir, o usuário é apenas promovido.
+
+### 3. Execute
+
+| Comando | O que faz |
+| --- | --- |
+| `npm start` | Servidor de desenvolvimento |
+| `npm test` | Testes unitários |
+| `npm run build` | Build de produção |
+| `npm run deploy` | Build + hosting + regras do Firestore |
+| `npm run deploy:hosting` | Publica só o site |
+| `npm run deploy:regras` | Publica só o `firestore.rules` |
+
+Antes do deploy, rode `npx firebase login` (ou defina `FIREBASE_TOKEN` no `.env`, gerado com `npx firebase login:ci`). O script se recusa a publicar enquanto o `.env` tiver os valores de exemplo.
+
+## 🎨 Personalizando para o seu evento
+
+- **Textos do evento** (nome, edição, datas, horas, frase): `src/app/core/event.config.ts`.
+- **Arte do certificado**: substitua `public/certificado/frente.png` e `verso.png` (A4 paisagem). Título, assinaturas e conteúdo programático fazem parte da imagem.
+- **Posição dos textos dinâmicos** (nome, data, código): `src/app/core/certificate.config.ts`.
+
+As artes incluídas neste repositório pertencem ao evento original. Troque-as pelas suas ao reutilizar o projeto.
+
+## 📁 Estrutura
 
 ```
-npm run deploy           # build + hosting + regras do Firestore
-npm run deploy:hosting   # só o site
-npm run deploy:regras    # só firestore.rules
+src/app/
+├── core/     # serviços, modelos, regras de negócio e configuração do evento/certificado
+├── pages/    # admin, director, accept-invite, login e verify
+└── shared/   # componentes reutilizáveis (cabeçalho, modal, listas, formulários)
+scripts/      # create-admin, deploy e carregamento do .env
+firestore.rules
 ```
 
-Primeiro rode `npx firebase login` (ou defina `FIREBASE_TOKEN` no `.env`, gerado com `npx firebase login:ci`). O script se recusa a publicar enquanto o `.env` ainda tiver os valores de exemplo.
+## 🤝 Contribuindo
 
-## Desenvolvimento
+Sugestões e pull requests são bem-vindos. Abra uma issue descrevendo a ideia ou o problema antes de mudanças grandes.
 
-`npm start` · `npm test` (requer Node ≥ 22.22.3).
+## 📄 Licença
+
+O código é distribuído sob a licença [MIT](LICENSE). A arte e os textos do certificado do evento original não estão cobertos por ela.
+
+---
+Feito por [Victor Teodoro](https://github.com/victeo).
